@@ -17,6 +17,7 @@ INSTALLED_APPS = [
     'city',
     'trips',
     'booking',
+    'billing',
 ]
 AUTH_USER_MODEL = 'accounts.User'
 LOGIN_REDIRECT_URL = 'home'  # або назва вашої View

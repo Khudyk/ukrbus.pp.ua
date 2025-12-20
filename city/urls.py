@@ -18,8 +18,8 @@ urlpatterns = [
 
 
     # --- Міста ---
-    path('cities/', city_list_view, name='city_list'),
-    path('cities/<int:city_id>/', city_detail_view, name='city_detail'),
+    path('list/', city_list_view, name='city_list'),
+    path('<int:city_id>/', city_detail_view, name='city_detail'),
 
 ]
 

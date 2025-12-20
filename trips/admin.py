@@ -33,9 +33,3 @@ class RouteAdmin(admin.ModelAdmin):
         super().save_model(request, obj, form, change)
 
 
-@admin.register(RouteStop)
-class RouteStopAdmin(admin.ModelAdmin):
-    # Окремий вид для зупинок, якщо потрібно швидко знайти конкретну
-    list_display = ('city', 'route', 'day_of_week', 'departure_time', 'order')
-    list_filter = ('day_of_week', 'city')
-    ordering = ('day_of_week', 'departure_time')

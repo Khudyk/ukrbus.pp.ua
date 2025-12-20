@@ -29,7 +29,14 @@
                             <div class="p-3 border rounded-3 border-light bg-dark bg-opacity-25 shadow-sm">
                                 <div class="d-flex justify-content-between align-items-start">
                                     <div>
-                                        <h6 class="text-white mb-1">{{ booking.route.title }}</h6>
+                                        <h6 class="text-white mb-1 fw-bold text-uppercase" style="letter-spacing: 0.5px;">
+                    <i class="fas fa-bus-alt text-warning me-2 small"></i>
+                    {% if booking.route.carrier.carrier_profile.company_name %}
+                        {{ booking.route.carrier.carrier_profile.company_name }}
+                    {% else %}
+                        {{ booking.route.carrier.get_full_name|default:booking.route.carrier.username }}
+                    {% endif %}
+                </h6>
                                         <p class="small text-white-50 mb-0">
                                             <i class="fas fa-map-marker-alt text-warning me-1"></i>
                                             {{ booking.departure_point }} → {{ booking.arrival_point }}

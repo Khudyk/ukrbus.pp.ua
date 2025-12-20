@@ -1,53 +1,82 @@
-<div class="glass-card h-100 shadow-sm animate-fade-in border-0 position-relative">
-    <div class="p-4">
-        <div class="d-flex justify-content-between align-items-start mb-3">
-            <h5 class="text-white fw-bold mb-0">{{ route.title }}</h5>
-            <span class="badge bg-warning text-dark px-2 py-1 small">
-                <i class="fas fa-star me-1"></i>4.9
-            </span>
-        </div>
+<div class="glass-card h-100 shadow-sm animate-fade-in border-0 position-relative d-flex flex-column {% if route.is_boosted %}top-boosted-card{% endif %}">
 
-        <div class="text-white-50 small mb-3">
-            <i class="fas fa-id-card me-2"></i>{{ route.carrier.get_full_name|default:route.carrier.username }}
-        </div>
+    {% if route.is_boosted %}
+    <div class="position-absolute top-0 end-0 m-3" style="z-index: 10;">
+        <span class="badge rounded-pill bg-primary shadow-glow px-3 py-2 border border-primary-subtle">
+            <i class="fas fa-crown text-warning me-1"></i> TOP до {{ route.top_until|date:"d.m" }}
+        </span>
+    </div>
+    {% endif %}
 
-        <div class="route-line-container my-4">
-            <div class="d-flex justify-content-between position-relative">
-                <div class="position-absolute top-50 start-0 end-0 border-top border-secondary opacity-25" style="z-index: 0;"></div>
-
-                {% with first_stop=route.stops.all|dictsort:"order"|first %}
-                <div class="bg-dark p-1 rounded-circle position-relative" style="z-index: 1; border: 2px solid #ffc107;">
-                    <div class="text-center position-absolute top-100 start-50 translate-middle-x mt-2" style="width: 80px;">
-                        <small class="text-white d-block">{{ first_stop.city }}</small>
-                        <strong class="text-warning">{{ first_stop.departure_time|time:"H:i" }}</strong>
-                    </div>
-                </div>
-                {% endwith %}
-
-                {% with last_stop=route.stops.all|dictsort:"order"|last %}
-                <div class="bg-dark p-1 rounded-circle position-relative" style="z-index: 1; border: 2px solid #0d6efd;">
-                    <div class="text-center position-absolute top-100 start-50 translate-middle-x mt-2" style="width: 80px;">
-                        <small class="text-white d-block">{{ last_stop.city }}</small>
-                        <strong class="text-info">{{ last_stop.departure_time|time:"H:i" }}</strong>
-                    </div>
-                </div>
-                {% endwith %}
+    <div class="p-4 flex-grow-1">
+        <div class="mb-3">
+            <div class="d-flex align-items-center flex-wrap gap-2 pe-5">
+                {% for stop in route.stops.all|dictsort:"order" %}
+                    <span class="text-white fw-bold h5 mb-0">{{ stop.city.name }}</span>
+                    {% if not forloop.last %}
+                        <i class="fas fa-long-arrow-alt-right text-primary mx-1 small"></i>
+                    {% endif %}
+                {% endfor %}
             </div>
-        </div>
 
-        <div class="mt-5 pt-3 d-flex justify-content-between align-items-center">
-            <div class="text-white-50 small">
-                <i class="fas fa-couch me-1"></i> {{ route.total_seats }} місць
-            </div>
-            <div class="h4 text-warning fw-bold mb-0">
-                ₴{{ route.price|default:"---" }}
+            <div class="mt-2 d-flex align-items-center">
+                <div class="badge bg-primary bg-opacity-25 text-info border border-info-subtle small fw-normal">
+                    <i class="fas fa-bus-alt me-1"></i>
+                    <span class="ms-1 fw-bold">
+                        {% if route.carrier.carrier_profile.company_name %}
+                            {{ route.carrier.carrier_profile.company_name }}
+                        {% elif route.carrier.company_name %}
+                            {{ route.carrier.company_name }}
+                        {% else %}
+                            {{ route.carrier.get_full_name|default:route.carrier.username }}
+                        {% endif %}
+                    </span>
+                </div>
             </div>
         </div>
 
         <hr class="border-light opacity-10 my-3">
 
-        <a href="{% url 'make_booking' route.id %}" class="btn glass-btn-registration w-100 py-2 fw-bold text-uppercase">
-            <i class="fas fa-bolt me-2"></i>Забронювати
-        </a>
+        <div class="route-details mb-4">
+            {% for stop in route.stops.all|dictsort:"order" %}
+                <div class="stop-item d-flex justify-content-between align-items-start mb-3">
+                    <div class="d-flex align-items-center">
+                        <div class="stop-dot {% if route.is_boosted %}bg-primary{% endif %}"></div>
+                        <div class="ms-3">
+                            <div class="text-white small fw-bold">{{ stop.city.name }}</div>
+                            <div class="text-white-50" style="font-size: 0.75rem;">
+                                <i class="far fa-calendar-alt me-1" style="font-size: 0.7rem;"></i>
+                                {{ stop.get_day_of_week_display }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <div class="badge bg-dark text-primary border border-primary-subtle py-2 px-2 shadow-sm">
+                            <i class="far fa-clock me-1"></i>{{ stop.departure_time|time:"H:i" }}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="p-4 pt-0">
+        <div class="d-flex justify-content-between align-items-center mb-3 px-1">
+            <span class="text-white-50 small font-monospace">ЦІНА КВИТКА</span>
+            <div class="text-end">
+                <span class="h4 text-white fw-bold mb-0">₴{{ route.price|default:"450" }}</span>
+            </div>
+        </div>
+
+        {% if not user.is_carrier %}
+            <a href="{% url 'make_booking' route.id %}?{% if request.GET.date %}date={{ request.GET.date }}&{% endif %}{% if request.GET.start_city %}start_city={{ request.GET.start_city }}&{% endif %}{% if request.GET.end_city %}end_city={{ request.GET.end_city }}{% endif %}"
+               class="btn glass-btn-registration w-100 py-3 fw-bold text-uppercase">
+                <i class="fas fa-ticket-alt me-2"></i>Забронювати
+            </a>
+        {% else %}
+            <button class="btn btn-outline-secondary w-100 py-3 disabled opacity-50" style="border-radius: 12px;">
+                Вхід для пасажирів
+            </button>
+        {% endif %}
     </div>
 </div>

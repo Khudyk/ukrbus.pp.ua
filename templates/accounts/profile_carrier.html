@@ -2,59 +2,132 @@
 
 {% block content %}
 <div class="row justify-content-center">
-    <div class="col-lg-10"> <div class="glass-card shadow-lg animate-fade-in">
+    <div class="col-lg-10">
+        <div class="glass-card shadow-lg animate-fade-in">
             <div class="row align-items-center mb-4">
                 <div class="col-auto">
-                    <div class="glass-icon" style="width: 100px; height: 100px; font-size: 3rem; background: rgba(255, 193, 7, 0.1); border-color: #ffc107;">
-                        <i class="fas fa-bus text-warning"></i>
+                    <div class="glass-icon" style="width: 100px; height: 100px; font-size: 3rem; background: rgba(13, 110, 253, 0.1); border-color: var(--accent-color);">
+                        <i class="fas fa-bus text-primary"></i>
                     </div>
                 </div>
                 <div class="col">
                     <h2 class="mb-1 text-white fw-bold">{{ user.carrier_profile.company_name|default:user.username }}</h2>
-                    <span class="badge rounded-pill bg-success px-3">Перевізник</span>
-                    <p class="text-white-50 mt-2 mb-0"><i class="fas fa-phone me-2"></i>{{ user.phone_number }}</p>
+                    <span class="badge rounded-pill bg-primary px-3 shadow-sm">Перевізник</span>
+
+                    <p class="text-white-50 mt-2 mb-0">
+                        <i class="fas fa-phone me-2 text-primary"></i>{{ user.phone_number|default:"Номер не вказано" }}
+                    </p>
+                    <div class="glass-card">
+    <h5>Ваш баланс:</h5>
+    <h2 class="text-primary">{{ user.carrier_profile.balance }} грн</h2>
+</div>
                 </div>
                 <div class="col-auto">
-                    <a href="{% url 'route_add' %}" class="btn glass-btn-registration"><i class="fas fa-plus me-2"></i>Новий рейс</a>
+                    <a href="{% url 'route_add' %}" class="btn glass-btn-registration">
+                        <i class="fas fa-plus me-2"></i>Новий рейс
+                    </a>
                 </div>
             </div>
 
             <hr class="border-light opacity-10">
 
             <div class="mt-4">
-                <h5 class="text-warning mb-4"><i class="fas fa-route me-2"></i>Мої активні маршрути</h5>
+                <h5 class="text-white mb-4"><i class="fas fa-route me-2 text-primary"></i>Керування маршрутами</h5>
+
                 {% if routes %}
-                    <div class="table-responsive rounded-3" style="background: rgba(0,0,0,0.2);">
-                        <table class="table table-borderless text-white align-middle">
-                            <thead>
-                                <tr class="text-white-50 border-bottom border-light border-opacity-10">
-                                    <th>Назва маршруту</th>
-                                    <th>Зупинок</th>
-                                    <th>Статус</th>
-                                    <th class="text-end">Дії</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for route in routes %}
-                                <tr>
-                                    <td class="fw-bold">{{ route.title }}</td>
-                                    <td>{{ route.stops.count }}</td>
-                                    <td><span class="badge bg-success opacity-75">Активний</span></td>
-                                    <td class="text-end">
-                                        <a href="{% url 'route_edit' route.id %}" class="btn btn-sm btn-outline-warning"><i class="fas fa-edit"></i></a>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                   <div class="table-responsive rounded-4" style="border: 1px solid var(--glass-border); backdrop-filter: var(--blur-val);">
+    <table class="table align-middle">
+        <thead>
+            <tr class="text-white-50">
+                <th class="ps-4">Маршрут</th>
+                <th>Зупинки</th>
+                <th>Останній ТОП</th>
+                <th>Статус</th>
+                <th class="text-end pe-4">Дії</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for route in routes %}
+            <tr class="transition-hover-row">
+                <td class="ps-4 fw-bold">{{ route.title }}</td>
+                <td>
+                    <span class="badge bg-dark rounded-pill">{{ route.stops.count }}</span>
+                </td>
+                <td>
+                    <span class="text-white-50 small">
+                        {% if route.boosted_at %}
+                            {{ route.boosted_at|date:"d.m H:i" }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </span>
+                </td>
+                <td>
+                    {% if route.is_active %}
+                        <span class="text-primary small"><i class="fas fa-circle me-1" style="font-size: 8px;"></i> Активний</span>
+                    {% else %}
+                        <span class="text-white-50 small"><i class="fas fa-circle me-1" style="font-size: 8px;"></i> Пауза</span>
+                    {% endif %}
+                </td>
+                <td class="text-end pe-4">
+                    <div class="btn-group">
+                        <a href="{ % url 'boost_route' route.id % }" class="btn btn-sm btn-outline-primary rounded-start-pill px-3">
+                            <i class="fas fa-rocket"></i>
+                        </a>
+                        <a href="{% url 'route_edit' route.id %}" class="btn btn-sm btn-glass-edit rounded-end-pill px-3">
+                            <i class="fas fa-edit"></i>
+                        </a>
                     </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
                 {% else %}
-                    <div class="text-center py-5 border border-dashed border-light rounded-3 opacity-50">
-                        <p>У вас ще немає створених маршрутів.</p>
+                    <div class="text-center py-5 border border-dashed border-light border-opacity-25 rounded-4 bg-black bg-opacity-10">
+                        <i class="fas fa-map-marked-alt fa-3x text-white-50 mb-3 opacity-25"></i>
+                        <p class="text-white-50">У вас ще немає створених маршрутів.</p>
+                        <a href="{% url 'route_add' %}" class="btn btn-link text-primary text-decoration-none">Створити перший маршрут</a>
                     </div>
                 {% endif %}
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    /* Стиль для кнопки редагування */
+    .btn-glass-edit {
+        background: rgba(255, 255, 255, 0.05);
+        color: white;
+        border: 1px solid var(--glass-border);
+        transition: var(--transition);
+    }
+    .btn-glass-edit:hover {
+        background: var(--glass-bg-hover);
+        color: var(--accent-color);
+        border-color: var(--accent-color);
+    }
+
+    /* Ефект при наведенні на рядок таблиці */
+    .transition-hover-row {
+        transition: background 0.3s ease;
+    }
+    .transition-hover-row:hover {
+        background: rgba(255, 255, 255, 0.03);
+    }
+
+    /* Кастомний скроллбар для таблиці */
+    .table-responsive::-webkit-scrollbar {
+        height: 6px;
+    }
+    .table-responsive::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.1);
+    }
+    .table-responsive::-webkit-scrollbar-thumb {
+        background: var(--glass-border);
+        border-radius: 10px;
+    }
+</style>
 {% endblock %}

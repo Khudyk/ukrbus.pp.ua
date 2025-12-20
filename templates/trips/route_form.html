@@ -19,35 +19,54 @@
     {% endif %}
 
     <div class="glass-card p-4">
-        <h2 class="text-white mb-4">
-            {% if object %}Редагування маршруту{% else %}Створення маршруту{% endif %}
-        </h2>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="text-white mb-0">
+                {% if object %}Редагування маршруту{% else %}Створення маршруту{% endif %}
+            </h2>
+
+            {% if object and object.boosted_at %}
+            <div class="text-end">
+                <span class="badge bg-primary rounded-pill px-3 py-2 shadow-sm">
+                    <i class="fas fa-rocket me-1"></i> Оновлено: {{ object.boosted_at|date:"d.m.Y H:i" }}
+                </span>
+            </div>
+            {% endif %}
+        </div>
 
         <form method="post">
             {% csrf_token %}
-            <div class="mb-4">
-                <label class="text-white-50">Назва маршруту</label>
-                {{ form.title }}
+
+            <div class="row mb-4">
+                <div class="col-md-8">
+                    <label class="text-white-50 small mb-1">Назва маршруту</label>
+                    {{ form.title }}
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <div class="form-check form-switch glass-input border-0 py-2 px-4 d-flex align-items-center">
+                        {{ form.is_active }}
+                        <label class="form-check-label ms-3 text-white" for="{{ form.is_active.id_for_label }}">Активний</label>
+                    </div>
+                </div>
             </div>
 
-            <div class="table-responsive p-4 rounded-4" style="background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.1);">
-                <h5 class="text-warning mb-4"><i class="fas fa-clock me-2"></i>Налаштування зупинок</h5>
+            <div class="table-responsive p-4 rounded-4 mb-4" style="background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.1);">
+                <h5 class="text-primary mb-4"><i class="fas fa-route me-2"></i>Графік та зупинки</h5>
 
                 {{ stops.management_form }}
 
                 <table class="table table-borderless align-middle text-white">
-                    <thead class="text-white-50 border-bottom border-secondary">
+                    <thead class="text-white-50 border-bottom border-white border-opacity-10">
                         <tr>
                             <th style="width: 80px;">№</th>
                             <th>Місто</th>
-                            <th>День</th>
+                            <th>День тижня</th>
                             <th>Час</th>
                             <th class="text-center text-danger">Видалити</th>
                         </tr>
                     </thead>
                     <tbody id="sortable-stops">
                         {% for stop_form in stops %}
-                        <tr class="stop-row border-bottom border-white-5 border-opacity-10">
+                        <tr class="stop-row border-bottom border-white border-opacity-5">
                             <td class="py-3 drag-handle" style="cursor: grab;">
                                 <i class="fas fa-grip-lines me-2 text-white-50"></i>
                                 <span class="order-text">{{ forloop.counter }}</span>
@@ -59,28 +78,32 @@
                             <td>{{ stop_form.city }}</td>
                             <td>{{ stop_form.day_of_week }}</td>
                             <td>{{ stop_form.departure_time }}</td>
-                            <td class="text-center">{{ stop_form.DELETE }}</td>
+                            <td class="text-center">
+                                <div class="form-check d-flex justify-content-center">
+                                    {{ stop_form.DELETE }}
+                                </div>
+                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
 
                 <div class="text-center mt-3">
-                    <button type="button" id="add-stop-btn" class="btn btn-outline-warning btn-sm">Додати зупинку</button>
+                    <button type="button" id="add-stop-btn" class="btn btn-outline-primary btn-sm rounded-pill px-4">
+                        <i class="fas fa-plus me-1"></i> Додати зупинку
+                    </button>
                 </div>
             </div>
 
-            <button type="submit" class="btn glass-btn-registration w-100 mt-4">Зберегти маршрут</button>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <a href="{% url 'profile' %}" class="btn btn-outline-light w-100 py-2 rounded-3 opacity-50">Скасувати</a>
+                </div>
+                <div class="col-md-6">
+                    <button type="submit" class="btn glass-btn-registration w-100 py-2">Зберегти зміни</button>
+                </div>
+            </div>
         </form>
     </div>
 </div>
-
-
 {% endblock %}
-<datalist id="cities-datalist">
-    {% for city_name in cities_list %}
-        {% if city_name %}
-            <option value="{{ city_name }}">
-        {% endif %}
-    {% endfor %}
-</datalist>

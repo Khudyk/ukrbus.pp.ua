@@ -38,8 +38,10 @@ def city_list_view(request):
         'search_query': q,
         'debug_city_names': [city.name for city in page_obj.object_list],  # Це покаже порядок, що передається в шаблон
     }
-    return render(request, 'locations/city_list.html', context)
+    return render(request, 'city/city_list.html', context)
 
 def city_detail_view(request, city_id):
     city = get_object_or_404(City, id=city_id)
-    return render(request, 'locations/city_detail.html', {'city': city})
+    return render(request, 'city/city_detail.html', {'city': city})
+
+

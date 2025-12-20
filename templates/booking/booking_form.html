@@ -4,68 +4,74 @@
 <div class="container mt-5">
     <div class="row justify-content-center">
         <div class="col-md-8 col-lg-6">
-            <div class="glass-card p-4 shadow-lg border-0">
+            <div class="glass-card p-4 animate-fade-in">
                 <div class="text-center mb-4">
-                    <h2 class="text-white fw-bold">Оформлення квитка</h2>
-                    <div class="badge bg-warning text-dark px-3 py-2">
-                        <i class="fas fa-bus me-2"></i> {{ route.title }}
-                    </div>
+                    <h2 class="text-white fw-bold shadow-text">Оформлення квитка</h2>
+
                 </div>
 
-                <div class="route-details-preview mb-4 p-3 rounded" style="background: rgba(255,255,255,0.05);">
-                    <p class="text-white-50 small mb-2 text-uppercase fw-bold text-center">Ваш маршрут:</p>
-                    <div class="d-flex justify-content-between align-items-center">
+                <div class="mb-4 p-3 rounded glass-input" style="background: rgba(255,255,255,0.03);">
+                    <p class="text-white-50 small mb-3 text-uppercase fw-bold text-center" style="letter-spacing: 1px;">Деталі рейсу</p>
+                    <p class="text-white-50 small mb-3 text-uppercase fw-bold text-center" style="letter-spacing: 1px;">Перевізник:
+            {% if route.carrier.carrier_profile.company_name %}
+                {{ route.carrier.carrier_profile.company_name }}
+            {% elif route.carrier.company_name %}
+                {{ route.carrier.company_name }}
+            {% else %}
+                {{ route.carrier.get_full_name|default:route.carrier.username }}
+            {% endif %}
+         </p>
+                    <div class="d-flex justify-content-between align-items-start px-2">
                         {% for stop in route.stops.all|dictsort:"order" %}
-                            <div class="text-center">
-                                <span class="text-white d-block small">{{ stop.city }}</span>
-                                <span class="text-warning fw-bold small">{{ stop.departure_time|time:"H:i" }}</span>
+                            <div class="text-center" style="flex: 1;">
+                                <span class="text-white d-block small fw-bold">{{ stop.city.name }}</span>
+                                <span class="text-warning small">{{ stop.departure_time|time:"H:i" }}</span>
                             </div>
                             {% if not forloop.last %}
-                                <div class="flex-grow-1 mx-2 border-top border-warning opacity-25" style="height: 0;"></div>
+                                <div class="mt-2 mx-1 border-top border-warning opacity-25" style="flex: 0.5;"></div>
                             {% endif %}
                         {% endfor %}
                     </div>
                 </div>
 
-                <hr class="border-secondary opacity-25 mb-4">
-
-                <form method="post" class="needs-validation">
+                <form method="post" novalidate>
                     {% csrf_token %}
 
                     {% for field in form %}
                     <div class="mb-3">
-                        <label for="{{ field.id_for_label }}" class="form-label text-white-50 small">
+                        <label for="{{ field.id_for_label }}" class="form-label text-white-50 small ms-1">
                             {{ field.label }}
                         </label>
 
                         <div class="input-group">
-                            <span class="input-group-text glass-input border-end-0 text-warning">
+                            <span class="input-group-text glass-input border-end-0 text-warning bg-transparent" style="width: 45px; justify-content: center;">
                                 {% if field.name == 'trip_date' %}<i class="fas fa-calendar-day"></i>
                                 {% elif field.name == 'departure_point' %}<i class="fas fa-map-marker-alt"></i>
                                 {% elif field.name == 'arrival_point' %}<i class="fas fa-map-pin"></i>
                                 {% elif field.name == 'seats_count' %}<i class="fas fa-users"></i>
                                 {% elif field.name == 'contact_phone' %}<i class="fas fa-phone"></i>
+                                {% else %}<i class="fas fa-edit"></i>
                                 {% endif %}
                             </span>
 
-                            {# Автоматичний рендеринг: Django сам вибере <select> або <input> #}
+                            {# Додаємо клас glass-input через фільтр або віджети у forms.py #}
                             {{ field }}
                         </div>
 
                         {% if field.errors %}
-                            {% for error in field.errors %}
-                                <div class="text-danger small mt-1"><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</div>
-                            {% endfor %}
+                            <div class="text-warning small mt-1 animate-fade-in">
+                                <i class="fas fa-exclamation-triangle me-1"></i>{{ field.errors|striptags }}
+                            </div>
                         {% endif %}
                     </div>
                     {% endfor %}
 
                     <div class="mt-4">
-                        <button type="submit" class="btn glass-btn-registration w-100 py-3 fw-bold text-uppercase">
-                            <i class="fas fa-check-circle me-2"></i>Підтвердити бронювання
+                        <button type="submit" class="btn glass-btn-registration w-100 py-3 fw-bold">
+                            <i class="fas fa-check-circle me-2"></i>ПІДТВЕРДИТИ БРОНЮВАННЯ
                         </button>
-                        <a href="{% url 'booking_route_list' %}" class="btn btn-link w-100 text-white-50 mt-2 text-decoration-none">
-                            <i class="fas fa-arrow-left me-1"></i> Повернутися до вибору
+                        <a href="{% url 'booking_route_list' %}" class="btn btn-link w-100 text-white-50 mt-2 text-decoration-none small">
+                            <i class="fas fa-arrow-left me-1"></i> Скасувати та повернутися
                         </a>
                     </div>
                 </form>
@@ -73,36 +79,9 @@
 
             <div class="mt-4 p-3 text-center text-white-50 small glass-card border-0" style="background: rgba(255, 193, 7, 0.05);">
                 <i class="fas fa-info-circle text-warning me-2"></i>
-                Оберіть зупинки, де ви плануєте сісти в автобус та вийти з нього.
+                Будь ласка, перевірте правильність введених даних перед підтвердженням.
             </div>
         </div>
     </div>
 </div>
-
-<style>
-    /* Стилізація для Django віджетів */
-    .glass-input, select.form-control, input.form-control {
-        background: rgba(255, 255, 255, 0.1) !important;
-        border: 1px solid rgba(255, 255, 255, 0.2) !important;
-        color: white !important;
-    }
-
-    /* Для випадаючих списків (щоб текст був читабельним у Chrome/Firefox) */
-    select.glass-input option {
-        background: #2b2b2b;
-        color: white;
-    }
-
-    .glass-input:focus {
-        background: rgba(255, 255, 255, 0.15) !important;
-        box-shadow: 0 0 10px rgba(255, 193, 7, 0.2) !important;
-        border-color: #ffc107 !important;
-    }
-
-    /* Виправляємо закруглення в input-group */
-    .input-group .glass-input:not(:first-child) {
-        border-top-left-radius: 0 !important;
-        border-bottom-left-radius: 0 !important;
-    }
-</style>
 {% endblock %}

@@ -13,7 +13,7 @@ class Booking(models.Model):
     route = models.ForeignKey(Route, on_delete=models.CASCADE, related_name='bookings')
     trip_date = models.DateField(verbose_name="Дата поїздки")
     seats_count = models.PositiveIntegerField(default=1, verbose_name="Кількість місць")
-    contact_phone = models.CharField(max_length=20, verbose_name="Номер телефону")
+
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     created_at = models.DateTimeField(auto_now_add=True)
     departure_point = models.CharField(max_length=100, verbose_name="Місце посадки")

@@ -1,7 +1,7 @@
 <nav class="navbar navbar-expand-lg navbar-dark glass-nav sticky-top">
     <div class="container">
         <a class="navbar-brand fw-bold shadow-text" href="/">
-            <i class="fas fa-bus-alt me-2 text-warning"></i>LogiTrans
+            <i class="fas fa-bus-alt me-2 text-primary"></i>LogiTrans
         </a>
         <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
             <span class="navbar-toggler-icon"></span>
@@ -9,43 +9,49 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                 <li class="nav-item">
-                    <a class="nav-link text-white" href="{% url 'booking_route_list' %}">
-                        <i class="fas fa-route me-1 text-warning"></i>Маршрути
+                    <a class="nav-link text-white opacity-75" href="{% url 'booking_route_list' %}">
+                        <i class="fas fa-route me-1 text-primary"></i>Маршрути
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white opacity-75" href="{% url 'city_list' %}">
+                        <i class="fas fa-globe-europe me-1 text-primary"></i>Напрямки
                     </a>
                 </li>
             </ul>
             <ul class="navbar-nav ms-auto align-items-center">
                 {% if user.is_authenticated %}
                     <li class="nav-item">
-                        <a class="nav-link text-light" href="{% url 'profile' %}">
-                            <i class="fas fa-user-circle me-1 text-warning"></i>Привіт, {{ user.username }}!
+                        <a class="nav-link text-light fw-medium" href="{% url 'profile' %}">
+                            <i class="fas fa-user-circle me-1 text-primary"></i>{{ user.username }}
                         </a>
                     </li>
                     <li class="nav-item">
                         <form action="{% url 'logout' %}" method="post" class="ms-lg-3">
                             {% csrf_token %}
-                            <button type="submit" class="btn glass-btn-warning btn-sm">Вийти</button>
+                            <button type="submit" class="btn btn-outline-light btn-sm px-3" style="border-radius: 8px; opacity: 0.8;">Вийти</button>
                         </form>
                     </li>
                 {% else %}
                     <li class="nav-item">
-                        <a class="nav-link text-white-50" href="{% url 'login' %}">Увійти</a>
+                        <a class="nav-link text-white-50 px-3" href="{% url 'login' %}">Увійти</a>
                     </li>
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle glass-btn-registration ms-lg-3 px-4 shadow-sm"
-                           href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <a class="nav-link dropdown-toggle btn btn-primary ms-lg-3 px-4 shadow-sm text-white fw-bold"
+                           href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"
+                           style="border-radius: 10px; background: linear-gradient(45deg, #0d6efd, #0dcaf0); border: none;">
                             РЕЄСТРАЦІЯ
                         </a>
-                        <ul class="dropdown-menu dropdown-menu-end glass-dropdown border-0 shadow" aria-labelledby="navbarDropdown">
+                        <ul class="dropdown-menu dropdown-menu-end glass-dropdown border-0 shadow-lg mt-2" aria-labelledby="navbarDropdown">
                             <li>
-                                <a class="dropdown-item" href="{% url 'passenger_signup' %}">
-                                    <i class="fas fa-user text-primary"></i> Я пасажир
+                                <a class="dropdown-item py-2" href="{% url 'passenger_signup' %}">
+                                    <i class="fas fa-user text-primary me-2"></i> Я пасажир
                                 </a>
                             </li>
-                            <li><hr class="dropdown-divider"></li>
+                            <li><hr class="dropdown-divider opacity-10"></li>
                             <li>
-                                <a class="dropdown-item" href="{% url 'carrier_signup' %}">
-                                    <i class="fas fa-truck text-success"></i> Я перевізник
+                                <a class="dropdown-item py-2" href="{% url 'carrier_signup' %}">
+                                    <i class="fas fa-bus text-success me-2"></i> Я перевізник
                                 </a>
                             </li>
                         </ul>

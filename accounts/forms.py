@@ -4,6 +4,8 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import get_user_model
 from .models import PassengerProfile, CarrierProfile
+from django.contrib.auth.forms import PasswordResetForm
+
 
 User = get_user_model()
 
@@ -69,3 +71,13 @@ class CarrierRegistrationForm(UserCreationForm):
                 }
             )
         return user
+
+class CustomPasswordResetForm(PasswordResetForm):
+    email = forms.EmailField(
+        label="Ваш Email",
+        max_length=254,
+        widget=forms.EmailInput(attrs={
+            'class': 'form-control glass-input',
+            'placeholder': 'Введіть ваш email для скидання',
+        })
+    )

@@ -3,7 +3,7 @@ from .models import Booking
 
 
 class BookingForm(forms.ModelForm):
-    # Порожні поля, які заповнюються в __init__
+    # Поля вибору зупинок
     departure_point = forms.ChoiceField(
         label="Місце посадки",
         widget=forms.Select(attrs={'class': 'form-control glass-input'})
@@ -15,29 +15,30 @@ class BookingForm(forms.ModelForm):
 
     class Meta:
         model = Booking
-        fields = ['trip_date', 'departure_point', 'arrival_point', 'seats_count', 'contact_phone']
+        # Видалили contact_phone з переліку полів
+        fields = ['trip_date', 'departure_point', 'arrival_point', 'seats_count']
         widgets = {
             'trip_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control glass-input'}),
-            'seats_count': forms.NumberInput(attrs={'class': 'form-control glass-input', 'min': 1}),
-            'contact_phone': forms.TextInput(attrs={'class': 'form-control glass-input', 'placeholder': '+380...'}),
+            'seats_count': forms.NumberInput(attrs={'class': 'form-control glass-input', 'min': 1, 'value': 1}),
         }
 
     def __init__(self, *args, **kwargs):
-        # Отримуємо маршрут з аргументів
+        # Отримуємо маршрут з kwargs (передається з View)
         route = kwargs.pop('route', None)
         super().__init__(*args, **kwargs)
 
-        # Створюємо початковий варіант "Оберіть зупинку"
+        # Початковий варіант вибору
         stop_choices = [('', 'Оберіть зупинку...')]
 
         if route:
-            # Додаємо міста з маршруту до списку вибору
+            # Отримуємо всі зупинки для цього маршруту, відсортовані за черговістю
             stops = route.stops.all().order_by('order')
             for stop in stops:
-                label = f"{stop.city} ({stop.departure_time.strftime('%H:%M')})"
-                stop_choices.append((stop.city, label))
+                # Формуємо текст: Назва міста (Час)
+                label = f"{stop.city.name} ({stop.departure_time.strftime('%H:%M')})"
+                stop_choices.append((stop.city.name, label))
 
-        # Призначаємо вибір полям
+        # Оновлюємо списки вибору для полів
         self.fields['departure_point'].choices = stop_choices
         self.fields['arrival_point'].choices = stop_choices
 
@@ -46,8 +47,10 @@ class BookingForm(forms.ModelForm):
         departure = cleaned_data.get("departure_point")
         arrival = cleaned_data.get("arrival_point")
 
-        # Перевірка, чи не обрав пасажир однакові міста
+        # 1. Перевірка на однакові міста
         if departure and arrival and departure == arrival:
             raise forms.ValidationError("Місце посадки та висадки не можуть збігатися.")
 
+        # 2. Логічна перевірка черговості (опціонально)
+        # Якщо потрібно переконатися, що зупинка висадки йде ПІСЛЯ зупинки посадки
         return cleaned_data

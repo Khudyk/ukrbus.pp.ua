@@ -55,3 +55,15 @@ def ProfileView(request):
         return render(request, 'accounts/profile_passenger.html', {
             'bookings': my_bookings
         })
+
+
+@login_required
+def check_balance(request):
+    # Отримуємо профіль перевізника поточного користувача
+    profile = request.user.carrier_profile
+    current_balance = profile.balance
+
+    if current_balance > 0:
+        return f"Ваш баланс: {current_balance} грн"
+    else:
+        return "На рахунку немає коштів"
