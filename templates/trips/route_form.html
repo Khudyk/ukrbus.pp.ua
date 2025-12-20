@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script src="{% static 'js/sortable_stops.js' %}"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    {% if form.errors or stops.errors %}
+    <div class="alert alert-danger shadow-sm">
+        <h6><i class="fas fa-bug me-2"></i>Помилки валідації:</h6>
+        {{ form.errors }}
+        {% for stop_form in stops %}
+            {% if stop_form.errors %}<p>Зупинка №{{ forloop.counter }}: {{ stop_form.errors }}</p>{% endif %}
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="glass-card p-4">
+        <h2 class="text-white mb-4">
+            {% if object %}Редагування маршруту{% else %}Створення маршруту{% endif %}
+        </h2>
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-4">
+                <label class="text-white-50">Назва маршруту</label>
+                {{ form.title }}
+            </div>
+
+            <div class="table-responsive p-4 rounded-4" style="background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.1);">
+                <h5 class="text-warning mb-4"><i class="fas fa-clock me-2"></i>Налаштування зупинок</h5>
+
+                {{ stops.management_form }}
+
+                <table class="table table-borderless align-middle text-white">
+                    <thead class="text-white-50 border-bottom border-secondary">
+                        <tr>
+                            <th style="width: 80px;">№</th>
+                            <th>Місто</th>
+                            <th>День</th>
+                            <th>Час</th>
+                            <th class="text-center text-danger">Видалити</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sortable-stops">
+                        {% for stop_form in stops %}
+                        <tr class="stop-row border-bottom border-white-5 border-opacity-10">
+                            <td class="py-3 drag-handle" style="cursor: grab;">
+                                <i class="fas fa-grip-lines me-2 text-white-50"></i>
+                                <span class="order-text">{{ forloop.counter }}</span>
+                                <div class="d-none">
+                                    {{ stop_form.order }}
+                                    {% for hidden in stop_form.hidden_fields %}{{ hidden }}{% endfor %}
+                                </div>
+                            </td>
+                            <td>{{ stop_form.city }}</td>
+                            <td>{{ stop_form.day_of_week }}</td>
+                            <td>{{ stop_form.departure_time }}</td>
+                            <td class="text-center">{{ stop_form.DELETE }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                <div class="text-center mt-3">
+                    <button type="button" id="add-stop-btn" class="btn btn-outline-warning btn-sm">Додати зупинку</button>
+                </div>
+            </div>
+
+            <button type="submit" class="btn glass-btn-registration w-100 mt-4">Зберегти маршрут</button>
+        </form>
+    </div>
+</div>
+
+
+{% endblock %}
+<datalist id="cities-datalist">
+    {% for city_name in cities_list %}
+        {% if city_name %}
+            <option value="{{ city_name }}">
+        {% endif %}
+    {% endfor %}
+</datalist>

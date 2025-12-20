@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="p-5 mb-4 bg-dark text-white rounded-3 shadow">
+    <div class="container-fluid py-5 text-center">
+        <h1 class="display-5 fw-bold text-warning">Подорожуйте комфортно</h1>
+        <p class="col-md-12 fs-4">Швидкий пошук рейсів для пасажирів та зручна система управління для перевізників.</p>
+        
+        {% if not user.is_authenticated %}
+            <div class="mt-4">
+                <a href="{% url 'passenger_signup' %}" class="btn btn-warning btn-lg px-4 me-md-2">Знайти поїздку</a>
+                <a href="{% url 'carrier_signup' %}" class="btn btn-outline-light btn-lg px-4">Стати партнером</a>
+            </div>
+        {% else %}
+            <div class="mt-4">
+                <p class="text-light">Ви авторизовані як <strong>{{ user.username }}</strong>. Перейдіть у кабінет, щоб розпочати роботу.</p>
+                <a href="{% url 'profile' %}" class="btn btn-warning btn-lg">Мій кабінет</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row text-center mt-5">
+    <div class="col-md-4">
+        <div class="p-3">
+            <i class="fa-solid fa-shield-halved fa-3x text-primary mb-3"></i>
+            <h4>Надійність</h4>
+            <p>Тільки перевірені перевізники та безпечні платежі.</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="p-3">
+            <i class="fa-solid fa-clock fa-3x text-primary mb-3"></i>
+            <h4>Швидкість</h4>
+            <p>Бронювання місця за лічені секунди онлайн.</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="p-3">
+            <i class="fa-solid fa-headset fa-3x text-primary mb-3"></i>
+            <h4>Підтримка</h4>
+            <p>Цілодобова допомога нашим клієнтам та партнерам.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

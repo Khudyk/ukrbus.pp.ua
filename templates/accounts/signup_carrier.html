@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block title %}Реєстрація перевізника{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow border-success">
+            <div class="card-body">
+                <h2 class="text-center mb-4 text-success">Реєстрація перевізника</h2>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="row">
+                        {% for field in form %}
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">{{ field.label }}</label>
+                                {{ field }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <button type="submit" class="btn btn-success w-100 mt-3">Створити акаунт компанії</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    input { display: block; width: 100%; padding: 0.4rem 0.8rem; border: 1px solid #ccc; border-radius: 5px; }
+</style>
+{% endblock %}

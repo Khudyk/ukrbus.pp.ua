@@ -1,0 +1,57 @@
+<nav class="navbar navbar-expand-lg navbar-dark glass-nav sticky-top">
+    <div class="container">
+        <a class="navbar-brand fw-bold shadow-text" href="/">
+            <i class="fas fa-bus-alt me-2 text-warning"></i>LogiTrans
+        </a>
+        <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="{% url 'booking_route_list' %}">
+                        <i class="fas fa-route me-1 text-warning"></i>Маршрути
+                    </a>
+                </li>
+            </ul>
+            <ul class="navbar-nav ms-auto align-items-center">
+                {% if user.is_authenticated %}
+                    <li class="nav-item">
+                        <a class="nav-link text-light" href="{% url 'profile' %}">
+                            <i class="fas fa-user-circle me-1 text-warning"></i>Привіт, {{ user.username }}!
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <form action="{% url 'logout' %}" method="post" class="ms-lg-3">
+                            {% csrf_token %}
+                            <button type="submit" class="btn glass-btn-warning btn-sm">Вийти</button>
+                        </form>
+                    </li>
+                {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link text-white-50" href="{% url 'login' %}">Увійти</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle glass-btn-registration ms-lg-3 px-4 shadow-sm"
+                           href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            РЕЄСТРАЦІЯ
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end glass-dropdown border-0 shadow" aria-labelledby="navbarDropdown">
+                            <li>
+                                <a class="dropdown-item" href="{% url 'passenger_signup' %}">
+                                    <i class="fas fa-user text-primary"></i> Я пасажир
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'carrier_signup' %}">
+                                    <i class="fas fa-truck text-success"></i> Я перевізник
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</nav>

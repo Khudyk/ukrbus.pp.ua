@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="glass-card shadow-lg animate-fade-in">
+            <div class="row align-items-center mb-4">
+                <div class="col-auto">
+                    <div class="glass-icon" style="width: 100px; height: 100px; font-size: 3rem; background: rgba(13, 110, 253, 0.1); border-color: #0d6efd;">
+                        <i class="fas fa-user text-primary"></i>
+                    </div>
+                </div>
+                <div class="col">
+                    <h2 class="mb-1 text-white fw-bold">{{ user.get_full_name|default:user.username }}</h2>
+                    <span class="badge rounded-pill bg-primary px-3">Пасажир</span>
+                    <p class="text-white-50 mt-2 mb-0"><i class="fas fa-envelope me-2"></i>{{ user.email }}</p>
+                </div>
+            </div>
+
+            <hr class="border-light opacity-10">
+
+            <div class="mt-4">
+                <h5 class="text-warning mb-3"><i class="fas fa-ticket-alt me-2"></i>Мої бронювання</h5>
+
+                {% if bookings %}
+                    <div class="row g-3">
+                        {% for booking in bookings %}
+                        <div class="col-12">
+                            <div class="p-3 border rounded-3 border-light bg-dark bg-opacity-25 shadow-sm">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="text-white mb-1">{{ booking.route.title }}</h6>
+                                        <p class="small text-white-50 mb-0">
+                                            <i class="fas fa-map-marker-alt text-warning me-1"></i>
+                                            {{ booking.departure_point }} → {{ booking.arrival_point }}
+                                        </p>
+                                        <p class="small text-white-50">
+                                            <i class="fas fa-calendar-day me-1"></i> {{ booking.trip_date|date:"d.m.Y" }}
+                                        </p>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="badge bg-warning text-dark mb-1">Місць: {{ booking.seats_count }}</span>
+                                        <br>
+                                        <small class="text-info">{{ booking.contact_phone }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-5 border border-dashed border-light rounded-3 opacity-50" style="border-style: dashed !important;">
+                        <p class="mb-3">У вас поки немає активних бронювань.</p>
+                        <a href="{% url 'booking_route_list' %}" class="btn btn-sm glass-btn-warning">Знайти рейс</a>
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="row mt-5 g-3">
+                <div class="col-6">
+                    <div class="text-center p-3 glass-card bg-transparent">
+                        <h4 class="text-warning mb-0">{{ bookings.count|default:"0" }}</h4>
+                        <small class="text-white-50">Поїздок</small>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="text-center p-3 glass-card bg-transparent">
+                        <h4 class="text-warning mb-0">5.0</h4>
+                        <small class="text-white-50">Рейтинг</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

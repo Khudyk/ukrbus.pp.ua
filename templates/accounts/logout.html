@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="text-center mt-5">
+    <h2>Ви вийшли з системи</h2>
+    <p>Дякуємо, що були з нами!</p>
+    <a href="{% url 'login' %}" class="btn btn-primary">Увійти знову</a>
+</div>
+{% endblock %}

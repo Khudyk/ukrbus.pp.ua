@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10"> <div class="glass-card shadow-lg animate-fade-in">
+            <div class="row align-items-center mb-4">
+                <div class="col-auto">
+                    <div class="glass-icon" style="width: 100px; height: 100px; font-size: 3rem; background: rgba(255, 193, 7, 0.1); border-color: #ffc107;">
+                        <i class="fas fa-bus text-warning"></i>
+                    </div>
+                </div>
+                <div class="col">
+                    <h2 class="mb-1 text-white fw-bold">{{ user.carrier_profile.company_name|default:user.username }}</h2>
+                    <span class="badge rounded-pill bg-success px-3">Перевізник</span>
+                    <p class="text-white-50 mt-2 mb-0"><i class="fas fa-phone me-2"></i>{{ user.phone_number }}</p>
+                </div>
+                <div class="col-auto">
+                    <a href="{% url 'route_add' %}" class="btn glass-btn-registration"><i class="fas fa-plus me-2"></i>Новий рейс</a>
+                </div>
+            </div>
+
+            <hr class="border-light opacity-10">
+
+            <div class="mt-4">
+                <h5 class="text-warning mb-4"><i class="fas fa-route me-2"></i>Мої активні маршрути</h5>
+                {% if routes %}
+                    <div class="table-responsive rounded-3" style="background: rgba(0,0,0,0.2);">
+                        <table class="table table-borderless text-white align-middle">
+                            <thead>
+                                <tr class="text-white-50 border-bottom border-light border-opacity-10">
+                                    <th>Назва маршруту</th>
+                                    <th>Зупинок</th>
+                                    <th>Статус</th>
+                                    <th class="text-end">Дії</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for route in routes %}
+                                <tr>
+                                    <td class="fw-bold">{{ route.title }}</td>
+                                    <td>{{ route.stops.count }}</td>
+                                    <td><span class="badge bg-success opacity-75">Активний</span></td>
+                                    <td class="text-end">
+                                        <a href="{% url 'route_edit' route.id %}" class="btn btn-sm btn-outline-warning"><i class="fas fa-edit"></i></a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5 border border-dashed border-light rounded-3 opacity-50">
+                        <p>У вас ще немає створених маршрутів.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

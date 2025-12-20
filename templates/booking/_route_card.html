@@ -1,0 +1,53 @@
+<div class="glass-card h-100 shadow-sm animate-fade-in border-0 position-relative">
+    <div class="p-4">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+            <h5 class="text-white fw-bold mb-0">{{ route.title }}</h5>
+            <span class="badge bg-warning text-dark px-2 py-1 small">
+                <i class="fas fa-star me-1"></i>4.9
+            </span>
+        </div>
+
+        <div class="text-white-50 small mb-3">
+            <i class="fas fa-id-card me-2"></i>{{ route.carrier.get_full_name|default:route.carrier.username }}
+        </div>
+
+        <div class="route-line-container my-4">
+            <div class="d-flex justify-content-between position-relative">
+                <div class="position-absolute top-50 start-0 end-0 border-top border-secondary opacity-25" style="z-index: 0;"></div>
+
+                {% with first_stop=route.stops.all|dictsort:"order"|first %}
+                <div class="bg-dark p-1 rounded-circle position-relative" style="z-index: 1; border: 2px solid #ffc107;">
+                    <div class="text-center position-absolute top-100 start-50 translate-middle-x mt-2" style="width: 80px;">
+                        <small class="text-white d-block">{{ first_stop.city }}</small>
+                        <strong class="text-warning">{{ first_stop.departure_time|time:"H:i" }}</strong>
+                    </div>
+                </div>
+                {% endwith %}
+
+                {% with last_stop=route.stops.all|dictsort:"order"|last %}
+                <div class="bg-dark p-1 rounded-circle position-relative" style="z-index: 1; border: 2px solid #0d6efd;">
+                    <div class="text-center position-absolute top-100 start-50 translate-middle-x mt-2" style="width: 80px;">
+                        <small class="text-white d-block">{{ last_stop.city }}</small>
+                        <strong class="text-info">{{ last_stop.departure_time|time:"H:i" }}</strong>
+                    </div>
+                </div>
+                {% endwith %}
+            </div>
+        </div>
+
+        <div class="mt-5 pt-3 d-flex justify-content-between align-items-center">
+            <div class="text-white-50 small">
+                <i class="fas fa-couch me-1"></i> {{ route.total_seats }} місць
+            </div>
+            <div class="h4 text-warning fw-bold mb-0">
+                ₴{{ route.price|default:"---" }}
+            </div>
+        </div>
+
+        <hr class="border-light opacity-10 my-3">
+
+        <a href="{% url 'make_booking' route.id %}" class="btn glass-btn-registration w-100 py-2 fw-bold text-uppercase">
+            <i class="fas fa-bolt me-2"></i>Забронювати
+        </a>
+    </div>
+</div>

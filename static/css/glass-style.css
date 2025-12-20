@@ -1,0 +1,187 @@
+/* =========================================
+   ЗМІННІ ТА ОСНОВНІ НАЛАШТУВАННЯ
+   ========================================= */
+:root {
+    --glass-bg: rgba(255, 255, 255, 0.05);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --glass-input-border: rgba(255, 255, 255, 0.2);
+    --accent-color: #ffc107;
+    --blur-val: blur(15px);
+    --transition: all 0.3s ease;
+}
+
+body {
+    background: linear-gradient(135deg, #1c1c1c, #2c3e50, #000000) fixed no-repeat;
+    background-size: cover;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    color: white;
+    font-family: 'Segoe UI', Roboto, sans-serif;
+}
+
+main { flex: 1; }
+
+.shadow-text { text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5); }
+
+/* =========================================
+   СКЛЯНІ ЕЛЕМЕНТИ (NAV, CARDS, FOOTER)
+   ========================================= */
+.glass-nav, .glass-dropdown, .glass-card, .glass-footer {
+    backdrop-filter: var(--blur-val);
+    -webkit-backdrop-filter: var(--blur-val);
+    border: 1px solid var(--glass-border);
+}
+
+.glass-nav {
+    background: rgba(0, 0, 0, 0.6) !important;
+    border-top: none;
+    transition: var(--transition);
+}
+
+.glass-card {
+    background: var(--glass-bg);
+    border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    padding: 2rem;
+}
+
+.glass-footer {
+    background: rgba(255, 255, 255, 0.03);
+    padding: 2rem 0;
+}
+
+/* =========================================
+   ФОРМИ ТА ІНПУТИ
+   ========================================= */
+/* Уніфікований стиль для всіх полів введення */
+.glass-card input,
+.glass-card select,
+.glass-card textarea,
+.table input,
+.table select {
+    background: var(--glass-bg) !important;
+    border: 1px solid var(--glass-input-border) !important;
+    color: white !important;
+    border-radius: 10px;
+    padding: 10px 15px;
+    transition: var(--transition);
+}
+
+.glass-card input:focus, .table input:focus {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border-color: var(--accent-color) !important;
+    box-shadow: 0 0 15px rgba(255, 193, 7, 0.2);
+    outline: none;
+}
+
+/* Специфічні налаштування для списків та часу */
+select option {
+    background-color: #1a1c1e !important;
+    color: white !important;
+}
+
+input[type="time"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    opacity: 0.7;
+}
+
+.form-check-input {
+    background-color: var(--glass-bg);
+    border: 1px solid var(--glass-input-border);
+}
+
+/* Приховування help-тексту */
+.helptext, .form-text { display: none !important; }
+
+/* =========================================
+   ТАБЛИЦІ
+   ========================================= */
+.table {
+    --bs-table-bg: transparent !important;
+    background-color: transparent !important;
+    color: white !important;
+}
+
+.table tr, .table td, .table th {
+    background-color: transparent !important;
+    border-color: var(--glass-border) !important;
+}
+
+.table thead th {
+    color: var(--accent-color) !important;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    background: rgba(0, 0, 0, 0.2) !important;
+}
+
+/* =========================================
+   КНОПКИ ТА ІКОНКИ
+   ========================================= */
+.glass-btn-registration, .glass-btn-warning {
+    border-radius: 10px;
+    padding: 8px 20px;
+    transition: var(--transition);
+}
+
+.glass-btn-registration {
+    background: var(--accent-color) !important;
+    color: #000 !important;
+    font-weight: 700;
+    text-transform: uppercase;
+    box-shadow: 0 0 15px rgba(255, 193, 7, 0.4);
+}
+
+.glass-btn-registration:hover {
+    transform: scale(1.03);
+    box-shadow: 0 0 25px rgba(255, 193, 7, 0.6);
+}
+
+.glass-btn-warning {
+    background: rgba(255, 193, 7, 0.1);
+    color: var(--accent-color);
+    border: 1px solid rgba(255, 193, 7, 0.3);
+}
+
+.glass-btn-warning:hover {
+    background: rgba(255, 193, 7, 0.3);
+    color: white;
+}
+
+.glass-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 45px; height: 45px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--glass-border);
+    border-radius: 50%;
+    color: white;
+    transition: var(--transition);
+}
+
+.glass-icon:hover {
+    color: var(--accent-color);
+    border-color: var(--accent-color);
+    transform: translateY(-5px);
+}
+
+
+    /* Стилізація для однакового вигляду всіх полів */
+    input {
+        display: block;
+        width: 100%;
+        padding: 0.5rem 0.75rem;
+        font-size: 1rem;
+        color: #212529;
+        background-color: #fff;
+        border: 1px solid #ced4da;
+        border-radius: 0.375rem;
+        transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+    }
+    input:focus {
+        border-color: #86b7fe;
+        outline: 0;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
