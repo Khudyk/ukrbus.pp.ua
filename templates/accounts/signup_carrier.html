@@ -3,28 +3,60 @@
 {% block title %}Реєстрація перевізника{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-6">
-        <div class="card shadow border-success">
-            <div class="card-body">
-                <h2 class="text-center mb-4 text-success">Реєстрація перевізника</h2>
-                <form method="post">
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10 col-lg-8">
+            <div class="glass-card p-4 p-md-5 shadow-glow-success">
+                <div class="text-center mb-5">
+                    <i class="fas fa-shuttle-van fa-3x text-success mb-3 opacity-75"></i>
+                    <h2 class="text-white shadow-text display-6">Реєстрація перевізника</h2>
+                    <p class="text-white-50">Станьте партнером та керуйте своїми маршрутами ефективно</p>
+                </div>
+
+                <form method="post" novalidate>
                     {% csrf_token %}
-                    <div class="row">
+                    <div class="row g-4">
                         {% for field in form %}
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">{{ field.label }}</label>
-                                {{ field }}
+                                <label class="text-white-50 small mb-2 ms-2 fw-bold">
+                                    {{ field.label }}
+                                </label>
+
+                                <div class="glass-input-wrapper">
+                                    {{ field }}
+                                </div>
+
+                                {% if field.errors %}
+                                    <div class="text-danger small mt-1 ms-2">
+                                        <i class="fas fa-exclamation-triangle me-1"></i>{{ field.errors|striptags }}
+                                    </div>
+                                {% endif %}
+
+                                {% if field.help_text %}
+                                    <div class="text-white-50 mt-1 ms-2" style="font-size: 0.7rem; opacity: 0.5;">
+                                        {{ field.help_text|safe }}
+                                    </div>
+                                {% endif %}
                             </div>
                         {% endfor %}
                     </div>
-                    <button type="submit" class="btn btn-success w-100 mt-3">Створити акаунт компанії</button>
+
+                    <div class="text-center mt-5">
+                        <button type="submit" class="glass-btn-registration px-5 py-3 w-100">
+                            Зареєструвати компанію <i class="fas fa-check-circle ms-2"></i>
+                        </button>
+                    </div>
                 </form>
+
+                <div class="text-center mt-4">
+                    <p class="mb-0 text-white-50 small">
+                        Вже зареєстровані?
+                        <a href="{% url 'login' %}" class="text-success text-decoration-none border-bottom border-success">Увійти в кабінет</a>
+                    </p>
+                </div>
             </div>
         </div>
     </div>
 </div>
-<style>
-    input { display: block; width: 100%; padding: 0.4rem 0.8rem; border: 1px solid #ccc; border-radius: 5px; }
-</style>
+
 {% endblock %}
