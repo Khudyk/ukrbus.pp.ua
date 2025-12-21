@@ -1,58 +1,45 @@
 function reindexStops() {
-    const rows = document.querySelectorAll('.stop-row');
-    rows.forEach((row, index) => {
-        const orderText = row.querySelector('.order-text');
-        if (orderText) orderText.innerText = index + 1;
-
-        const orderInput = row.querySelector('input[name*="order"]');
-        if (orderInput) {
-            orderInput.value = index;
-            orderInput.removeAttribute('disabled');
-        }
+    document.querySelectorAll('.stop-row').forEach((row, index) => {
+        const label = row.querySelector('.order-label');
+        if (label) label.innerText = index + 1;
+        const input = row.querySelector('input[name*="order"]');
+        if (input) input.value = index;
     });
 }
 
-const initStopsModule = () => {
+document.addEventListener('DOMContentLoaded', function() {
     const tableBody = document.getElementById('sortable-stops');
     const addBtn = document.getElementById('add-stop-btn');
-    const totalForms = document.querySelector('input[name="stops-TOTAL_FORMS"]');
-    const mainForm = document.querySelector('form');
+    const totalForms = document.getElementById('id_stops-TOTAL_FORMS');
 
-    if (tableBody && typeof Sortable !== 'undefined') {
-        new Sortable(tableBody, { handle: '.drag-handle', animation: 150, onEnd: reindexStops });
-    }
-
-    if (addBtn) {
+    if (addBtn && tableBody && totalForms) {
         addBtn.addEventListener('click', function(e) {
             e.preventDefault();
             const rows = document.querySelectorAll('.stop-row');
-            const currentTotal = parseInt(totalForms.value);
             if (rows.length === 0) return;
 
+            const currentCount = parseInt(totalForms.value);
             const newRow = rows[0].cloneNode(true);
-            newRow.innerHTML = newRow.innerHTML.replace(/stops-\d+-/g, `stops-${currentTotal}-`);
 
-            newRow.querySelectorAll('input, select').forEach(f => {
-                if (f.name.includes('-id')) f.value = '';
-                else if (f.name.includes('-order')) f.value = currentTotal;
-                else f.value = '';
+            // Очищення та оновлення індексів
+            newRow.innerHTML = newRow.innerHTML.replace(/stops-\d+-/g, `stops-${currentCount}-`);
+            newRow.querySelectorAll('input, select').forEach(input => {
+                input.value = '';
+                if (input.type === 'checkbox') input.checked = false;
+                input.classList.remove('is-invalid'); // Видаляємо помилки
             });
 
+            // Видаляємо ID, щоб не перезаписати існуючий запис
+            const idField = newRow.querySelector('input[name*="-id"]');
+            if (idField) idField.value = '';
+
             tableBody.appendChild(newRow);
-            totalForms.value = currentTotal + 1;
+            totalForms.value = currentCount + 1;
             reindexStops();
         });
     }
 
-    if (mainForm) {
-        mainForm.addEventListener('submit', reindexStops);
+    if (tableBody && typeof Sortable !== 'undefined') {
+        new Sortable(tableBody, { handle: '.drag-handle', animation: 150, onEnd: reindexStops });
     }
-};
-
-document.addEventListener('DOMContentLoaded', initStopsModule);
-const mainForm = document.querySelector('form');
-if (mainForm) {
-    mainForm.addEventListener('submit', function() {
-        reindexStops(); // Ця функція проставляє 0, 1, 2 в інпути order
-    });
-}
+});

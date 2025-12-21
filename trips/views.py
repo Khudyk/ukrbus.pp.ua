@@ -1,42 +1,18 @@
 from django.views.generic import ListView, UpdateView, CreateView
 from django.urls import reverse_lazy
-from django.shortcuts import redirect, get_object_or_404
+from django.shortcuts import redirect
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.auth.decorators import login_required
 from django.utils import timezone
-from django.db.models import Case, When, Value, BooleanField, ExpressionWrapper
+from django.db.models import Case, When, Value, BooleanField
+from django.contrib import messages
+from django.db import transaction
 
 from .forms import RouteForm, RouteStopFormSet
 from .models import Route, RouteStop
+from billing.models import TopPlan
+from billing.services import BillingService
 
 
-# ==========================================================
-# 1. СПИСОК МАРШРУТІВ (ВИПРАВЛЕНЕ СОРТУВАННЯ)
-# ==========================================================
-class RouteListView(ListView):
-    model = Route
-    template_name = 'trips/route_list.html'
-    context_object_name = 'routes'
-
-    def get_queryset(self):
-        now = timezone.now()
-        # annotate створює віртуальне поле, яке ми використовуємо для сортування
-        return Route.objects.filter(is_active=True).annotate(
-            is_active_top=Case(
-                When(top_until__gt=now, then=Value(True)),
-                default=Value(False),
-                output_field=BooleanField(),
-            )
-        ).order_by(
-            '-is_active_top',  # ПЕРШИМИ йдуть ті, де ТОП діє прямо зараз (True > False)
-            '-top_until',  # Далі — за терміном дії (довші ТОПи вище)
-            '-id'  # Всі інші — за новизною
-        )
-
-
-# ==========================================================
-# 2. БАЗОВИЙ КЛАС ДЛЯ ФОРМ
-# ==========================================================
 class RouteBaseView(LoginRequiredMixin):
     model = Route
     form_class = RouteForm
@@ -45,57 +21,65 @@ class RouteBaseView(LoginRequiredMixin):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Міста для datalist - суто алфавітний порядок
-        context['cities_list'] = RouteStop.objects.values_list(
-            'city__name', flat=True
-        ).distinct().order_by('city__name')
-
+        context['now'] = timezone.now()
         if self.request.POST:
-            context['stops'] = RouteStopFormSet(self.request.POST, instance=self.object)
+            # Використовуємо prefix='stops', щоб JS точно знаходив інпути
+            context['stops'] = RouteStopFormSet(self.request.POST, instance=self.object, prefix='stops')
         else:
-            context['stops'] = RouteStopFormSet(instance=self.object)
+            context['stops'] = RouteStopFormSet(instance=self.object, prefix='stops')
         return context
 
     def form_valid(self, form):
         context = self.get_context_data()
         stops = context['stops']
 
-        if form.is_valid() and stops.is_valid():
-            if not self.object or not self.object.pk:
-                form.instance.carrier = self.request.user
-                # Бонус на 1 добу при створенні
-                form.instance.top_until = timezone.now() + timezone.timedelta(days=1)
+        # Отримуємо вибір ТОП
+        boost_days = int(form.cleaned_data.get('boost_days', 0))
 
-            self.object = form.save()
-            stops.instance = self.object
-            stops.save()
-            return redirect(self.success_url)
+        if form.is_valid() and stops.is_valid():
+            try:
+                with transaction.atomic():
+                    self.object = form.save(commit=False)
+
+                    if not self.object.pk:
+                        self.object.carrier = self.request.user
+                        # Стартовий бонус 1 день
+                        self.object.top_until = timezone.now() + timezone.timedelta(days=1)
+
+                    # Логіка оплати
+                    if boost_days > 0:
+                        plan = TopPlan.objects.filter(days=boost_days, is_active=True).first()
+                        carrier = self.request.user.carrier_profile
+
+                        if plan and carrier.balance >= plan.price:
+                            success, msg = BillingService.process_payment(
+                                user=self.request.user,
+                                amount=plan.price,
+                                description=f"ТОП {plan.days} дн. для {self.object.title}"
+                            )
+                            if success:
+                                now = timezone.now()
+                                start = self.object.top_until if (
+                                            self.object.top_until and self.object.top_until > now) else now
+                                self.object.top_until = start + timezone.timedelta(days=plan.days)
+                                messages.success(self.request, f"ТОП активовано на {plan.days} днів!")
+                            else:
+                                messages.error(self.request, msg)
+                        else:
+                            messages.error(self.request, "Недостатньо коштів на балансі.")
+
+                    self.object.save()
+                    stops.instance = self.object
+                    stops.save()  # Django сам проігнорує абсолютно порожні форми
+
+                return redirect(self.success_url)
+            except Exception as e:
+                messages.error(self.request, f"Помилка збереження: {str(e)}")
 
         return self.render_to_response(self.get_context_data(form=form))
 
 
-class RouteCreateView(RouteBaseView, CreateView):
-    pass
+class RouteCreateView(RouteBaseView, CreateView): pass
 
 
-class RouteUpdateView(RouteBaseView, UpdateView):
-    pass
-
-
-# ==========================================================
-# 3. КНОПКА ПІДНЯТТЯ
-# ==========================================================
-@login_required
-def boost_route(request, pk):
-    route = get_object_or_404(Route, pk=pk, carrier=request.user)
-    now = timezone.now()
-
-    # Визначаємо точку старту для нарахування +7 днів
-    if route.top_until and route.top_until > now:
-        start_point = route.top_until
-    else:
-        start_point = now
-
-    route.top_until = start_point + timezone.timedelta(days=7)
-    route.save()
-    return redirect('profile')
+class RouteUpdateView(RouteBaseView, UpdateView): pass
