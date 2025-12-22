@@ -1,24 +1,35 @@
-from django.db import models
 from django.conf import settings
+from django.db import models
 from django.utils import timezone
+
 from city.models import City
 
 
 class Route(models.Model):
-    carrier = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name='routes',
-        verbose_name="Перевізник"
-    )
+    carrier = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='routes',
+                                verbose_name="Перевізник")
     title = models.CharField(max_length=255, verbose_name="Назва маршруту")
     is_active = models.BooleanField(default=True, verbose_name="Активний")
+    top_until = models.DateTimeField(null=True, blank=True, verbose_name="ТОП діє до")
 
-    top_until = models.DateTimeField(
-        null=True,
-        blank=True,
-        verbose_name="ТОП діє до"
+    is_passenger = models.BooleanField(
+        default=True,
+        verbose_name="Пасажирські перевезення",
+        help_text="Чи доступне бронювання місць для пасажирів"
     )
+    is_parcel = models.BooleanField(
+        default=True,
+        verbose_name="Доставка посилок",
+        help_text="Чи приймає цей маршрут посилки для передачі"
+    )
+
+    # --- Поля для цін (залишаються як були) ---
+    min_trip_price = models.DecimalField(max_digits=10, decimal_places=2, default=0,
+                                         verbose_name="Мінімальна ціна поїздки")
+    price_per_km = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="Ціна за 1 км")
+    min_parcel_price = models.DecimalField(max_digits=10, decimal_places=2, default=0,
+                                           verbose_name="Мінімальна ціна посилки")
+    price_per_kg = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="Ціна за 1 кг")
 
     class Meta:
         verbose_name = "Маршрут"
@@ -49,6 +60,7 @@ class Route(models.Model):
 
         return ", ".join([days_map.get(d) for d in day_numbers])
     # ===============================================
+
 
 class RouteStop(models.Model):
     DAYS_OF_WEEK = [

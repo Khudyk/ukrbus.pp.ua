@@ -1,45 +1,61 @@
+// Функція для перерахунку порядкових номерів
 function reindexStops() {
-    document.querySelectorAll('.stop-row').forEach((row, index) => {
-        const label = row.querySelector('.order-label');
-        if (label) label.innerText = index + 1;
-        const input = row.querySelector('input[name*="order"]');
-        if (input) input.value = index;
+    const rows = document.querySelectorAll('#sortable-stops .stop-row');
+    rows.forEach((row, index) => {
+        // 1. Оновлюємо візуальний текст (для користувача)
+        const displayNum = row.querySelector('.order-text');
+        if (displayNum) displayNum.innerText = index + 1;
+
+        // 2. Оновлюємо ПРИХОВАНЕ ПОЛЕ для Django (для сервера)
+        // Django генерує name на кшталт "stops-2-order".
+        // Ми шукаємо будь-який input, ім'я якого закінчується на "-order"
+        const orderInput = row.querySelector('input[name$="-order"]');
+
+        if (orderInput) {
+            orderInput.value = index + 1;
+            console.log(`Призначено order=${index + 1} для поля ${orderInput.name}`); // Для відладки в консолі
+        }
     });
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    const tableBody = document.getElementById('sortable-stops');
+// Функція ініціалізації
+function initRouteForm() {
     const addBtn = document.getElementById('add-stop-btn');
+    const tableBody = document.getElementById('sortable-stops');
     const totalForms = document.getElementById('id_stops-TOTAL_FORMS');
+    const template = document.getElementById('empty-form-template');
 
-    if (addBtn && tableBody && totalForms) {
+    // Захист від подвійного натискання та повторної ініціалізації
+    if (addBtn && !addBtn.getAttribute('data-listened')) {
+        addBtn.setAttribute('data-listened', 'true');
+        
         addBtn.addEventListener('click', function(e) {
             e.preventDefault();
-            const rows = document.querySelectorAll('.stop-row');
-            if (rows.length === 0) return;
+            e.stopPropagation(); // Зупиняємо розповсюдження події
 
             const currentCount = parseInt(totalForms.value);
-            const newRow = rows[0].cloneNode(true);
-
-            // Очищення та оновлення індексів
-            newRow.innerHTML = newRow.innerHTML.replace(/stops-\d+-/g, `stops-${currentCount}-`);
-            newRow.querySelectorAll('input, select').forEach(input => {
-                input.value = '';
-                if (input.type === 'checkbox') input.checked = false;
-                input.classList.remove('is-invalid'); // Видаляємо помилки
-            });
-
-            // Видаляємо ID, щоб не перезаписати існуючий запис
-            const idField = newRow.querySelector('input[name*="-id"]');
-            if (idField) idField.value = '';
-
-            tableBody.appendChild(newRow);
+            const html = template.innerHTML.replace(/__prefix__/g, currentCount);
+            
+            tableBody.insertAdjacentHTML('beforeend', html);
             totalForms.value = currentCount + 1;
+            
             reindexStops();
         });
     }
 
+    // Ініціалізація перетягування (SortableJS)
     if (tableBody && typeof Sortable !== 'undefined') {
-        new Sortable(tableBody, { handle: '.drag-handle', animation: 150, onEnd: reindexStops });
+        new Sortable(tableBody, { 
+            handle: '.drag-handle', 
+            animation: 150, 
+            onEnd: reindexStops 
+        });
     }
-});
+}
+
+// Запуск при завантаженні
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initRouteForm);
+} else {
+    initRouteForm();
+}
