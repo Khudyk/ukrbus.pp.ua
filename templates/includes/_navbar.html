@@ -20,19 +20,35 @@
                 </li>
             </ul>
             <ul class="navbar-nav ms-auto align-items-center">
-                {% if user.is_authenticated %}
-                    <li class="nav-item">
-                        <a class="nav-link text-light fw-medium" href="{% url 'profile' %}">
-                            <i class="fas fa-user-circle me-1 text-primary"></i>{{ user.username }}
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <form action="{% url 'logout' %}" method="post" class="ms-lg-3">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-outline-light btn-sm px-3" style="border-radius: 8px; opacity: 0.8;">Вийти</button>
-                        </form>
-                    </li>
-                {% else %}
+{% if user.is_authenticated %}
+    <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle text-light fw-medium d-flex align-items-center"
+           href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="fas fa-user-circle fa-lg me-2 text-primary"></i>
+            {{ user.username }}
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end glass-dropdown border-0 shadow-lg mt-2" aria-labelledby="userDropdown">
+            <li>
+                <a class="dropdown-item py-2" href="{% url 'profile' %}">
+                    <i class="fas fa-id-card text-primary me-2"></i> Профіль
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item py-2" href="{% url 'statistics' %}"> <i class="fas fa-chart-line text-info me-2"></i> Статистика
+                </a>
+            </li>
+            <li><hr class="dropdown-divider opacity-10"></li>
+            <li>
+                <form action="{% url 'logout' %}" method="post" class="px-3 py-1">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger btn-sm w-100" style="border-radius: 8px;">
+                        <i class="fas fa-sign-out-alt me-1"></i> Вийти
+                    </button>
+                </form>
+            </li>
+        </ul>
+    </li>
+{% else %}
                     <li class="nav-item">
                         <a class="nav-link text-white-50 px-3" href="{% url 'login' %}">Увійти</a>
                     </li>

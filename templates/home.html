@@ -22,23 +22,7 @@
                             <i class="fas fa-bus me-2"></i>СТАТИ ПАРТНЕРОМ
                         </a>
                     </div>
-                {% else %}
-                    <div class="glass-card d-inline-block p-4 rounded-4 mb-5 border border-light border-opacity-10 shadow-sm">
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="glass-icon" style="width: 50px; height: 50px; background: rgba(13, 110, 253, 0.1); border-color: #0d6efd;">
-                                <i class="fas fa-user text-primary"></i>
-                            </div>
-                            <div class="text-start">
-                                <p class="text-white-50 small mb-0">Раді вас бачити,</p>
-                                <h5 class="text-white fw-bold mb-0">{{ user.get_full_name|default:user.username }}</h5>
-                            </div>
-                            <div class="ms-3">
-                                <a href="{% url 'profile' %}" class="btn glass-btn-registration px-4">
-                                    <i class="fas fa-th-large me-2"></i>В КАБІНЕТ
-                                </a>
-                            </div>
-                        </div>
-                    </div>
+
                 {% endif %}
 
                 <div class="glass-card p-2 rounded-pill shadow-lg mx-auto col-xl-10 border-0" style="background: rgba(255,255,255,0.1);">

@@ -67,3 +67,26 @@ def check_balance(request):
         return f"Ваш баланс: {current_balance} грн"
     else:
         return "На рахунку немає коштів"
+
+
+@login_required
+def statistics_view(request):
+    user = request.user
+
+    # Перевірка ролі (змініть умову під вашу модель)
+    if hasattr(user, 'carrier_profile'):
+        # Логіка для перевізника
+        context = {
+            'total_revenue': 54000,  # Приклад даних
+            'active_routes': 12,
+            'total_passengers': 450,
+        }
+        return render(request, 'accounts/statistics_carrier.html', context)
+    else:
+        # Логіка для пасажира
+        context = {
+            'trips_count': 8,
+            'spent_money': 1250,
+            'bonuses': 100,
+        }
+        return render(request, 'accounts/statistics_passenger.html', context)
