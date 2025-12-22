@@ -11,13 +11,30 @@
         </div>
     </div>
 
-    <div class="row g-4">
-        <div class="col-md-6 col-lg-3">
-            <div class="card glass-card border-0 p-4 border-start border-primary border-4">
-                <p class="text-white-50 small mb-1">Загальний виторг</p>
-                <h3 class="fw-bold mb-0 text-primary">{{ total_revenue }} ₴</h3>
+    <div class="card glass-card border-0 p-4 mb-4 shadow-sm">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label small text-white-50">Період з:</label>
+                <input type="date" name="start_date" class="form-control bg-dark text-white border-secondary shadow-none" value="{{ start_date|default:'' }}">
             </div>
-        </div>
+            <div class="col-md-4">
+                <label class="form-label small text-white-50">По:</label>
+                <input type="date" name="end_date" class="form-control bg-dark text-white border-secondary shadow-none" value="{{ end_date|default:'' }}">
+            </div>
+            <div class="col-md-4 d-flex gap-2">
+                <button type="submit" class="btn btn-primary flex-grow-1">
+                    <i class="fas fa-filter me-2"></i>Застосувати
+                </button>
+                <a href="{% url 'statistics' %}" class="btn btn-outline-light" title="Скинути">
+                    <i class="fas fa-sync-alt"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+
+
+    <div class="row g-4">
+
         <div class="col-md-6 col-lg-3">
             <div class="card glass-card border-0 p-4 border-start border-success border-4">
                 <p class="text-white-50 small mb-1">Активні маршрути</p>
@@ -30,14 +47,69 @@
                 <h3 class="fw-bold mb-0 text-info">{{ total_passengers }}</h3>
             </div>
         </div>
+        <div class="col-md-6 col-lg-3">
+            <div class="card glass-card border-0 p-4 border-start border-primary border-4">
+                <p class="text-white-50 small mb-1">Загальний виторг</p>
+                <h3 class="fw-bold mb-0 text-primary">{{ total_revenue }} ₴</h3>
+            </div>
+        </div>
     </div>
 
     <div class="card glass-card border-0 mt-5 p-4">
-        <h5 class="mb-4">Популярні напрямки</h5>
-        <div class="progress mb-3" style="height: 10px; background: rgba(255,255,255,0.1);">
-            <div class="progress-bar bg-primary" style="width: 75%"></div>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h5 class="mb-0 text-white">
+                <i class="fas fa-chart-pie me-2 text-primary"></i>Частка маршрутів у замовленнях
+            </h5>
+            <span class="badge bg-dark text-white-50">Всього: {{ total_passengers }} пасаж.</span>
         </div>
-        <p class="small text-white-50">Київ — Львів (75% заповненість)</p>
+
+        {% if routes_list %}
+{% for route in routes_list %}
+    <div class="card glass-card border-0 mb-4 p-3" style="background: rgba(255,255,255,0.02);">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+            <div>
+                <h6 class="text-white fw-bold mb-1">{{ route.title }}</h6>
+                <small class="text-white-50">
+                    <i class="fas fa-map-marker-alt me-1 text-primary"></i>
+                    {{ route.stops.first.city.name }} — {{ route.stops.last.city.name }}
+                </small>
+            </div>
+            <div class="text-end">
+                <span class="badge bg-primary rounded-pill">ID: #{{ route.id }}</span>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <div class="d-flex justify-content-between small mb-1">
+                <span class="text-white-50"><i class="fas fa-money-bill-wave me-1 text-success"></i> Виторг</span>
+                <span class="text-success fw-bold">{{ route.route_revenue|default:0 }} ₴</span>
+            </div>
+            <div class="progress" style="height: 6px; background: rgba(255,255,255,0.05);">
+                <div class="progress-bar bg-success" role="progressbar"
+                     style="width: {% if total_revenue > 0 %}{% widthratio route.route_revenue total_revenue 100 %}{% else %}0{% endif %}%;">
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-2">
+            <div class="d-flex justify-content-between small mb-1">
+                <span class="text-white-50"><i class="fas fa-users me-1 text-info"></i> Популярність</span>
+                <span class="text-info fw-bold">{{ route.route_pax|default:0 }} пас.</span>
+            </div>
+            <div class="progress" style="height: 6px; background: rgba(255,255,255,0.05);">
+                <div class="progress-bar bg-info" role="progressbar"
+                     style="width: {% if total_passengers > 0 %}{% widthratio route.route_pax total_passengers 100 %}{% else %}0{% endif %}%;">
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-folder-open fa-3x text-white-50 mb-3 opacity-25"></i>
+                <p class="text-white-50">Дані для аналізу за цей період відсутні.</p>
+            </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

@@ -15,7 +15,7 @@
                     <span class="badge rounded-pill bg-primary px-3 shadow-sm">Перевізник</span>
 
                     <p class="text-white-50 mt-2 mb-0">
-                        <i class="fas fa-phone me-2 text-primary"></i>{{ user.phone_number|default:"Номер не вказано" }}
+                        <i class="fas fa-phone me-2 text-primary"></i>{{ user.carrier_profile.phone|default:"Номер не вказано" }}
                     </p>
                     <div class="glass-card">
     <h5>Ваш баланс:</h5>

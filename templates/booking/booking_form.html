@@ -4,31 +4,37 @@
 <div class="container mt-5">
     <div class="row justify-content-center">
         <div class="col-md-8 col-lg-6">
-            <div class="glass-card p-4 animate-fade-in">
+            <div class="glass-card p-4 animate-fade-in" style="background: rgba(255,255,255,0.05); backdrop-filter: blur(15px); border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);">
                 <div class="text-center mb-4">
                     <h2 class="text-white fw-bold shadow-text">Оформлення квитка</h2>
-
+                    <p class="text-white-50 small">Заповніть дані для резервування місця</p>
                 </div>
 
-                <div class="mb-4 p-3 rounded glass-input" style="background: rgba(255,255,255,0.03);">
-                    <p class="text-white-50 small mb-3 text-uppercase fw-bold text-center" style="letter-spacing: 1px;">Деталі рейсу</p>
-                    <p class="text-white-50 small mb-3 text-uppercase fw-bold text-center" style="letter-spacing: 1px;">Перевізник:
-            {% if route.carrier.carrier_profile.company_name %}
-                {{ route.carrier.carrier_profile.company_name }}
-            {% elif route.carrier.company_name %}
-                {{ route.carrier.company_name }}
-            {% else %}
-                {{ route.carrier.get_full_name|default:route.carrier.username }}
-            {% endif %}
-         </p>
-                    <div class="d-flex justify-content-between align-items-start px-2">
+                <div class="mb-4 p-3 rounded glass-input" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05);">
+                    <p class="text-white-50 small mb-3 text-uppercase fw-bold text-center" style="letter-spacing: 1px;">Інформація про рейс</p>
+
+                    <div class="text-center mb-3">
+                        <h5 class="text-white mb-1">
+                            {% if route.carrier.carrier_profile.company_name %}
+                                {{ route.carrier.carrier_profile.company_name }}
+                            {% else %}
+                                {{ route.carrier.get_full_name|default:route.carrier.username }}
+                            {% endif %}
+                        </h5>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-start px-2 position-relative">
                         {% for stop in route.stops.all|dictsort:"order" %}
-                            <div class="text-center" style="flex: 1;">
-                                <span class="text-white d-block small fw-bold">{{ stop.city.name }}</span>
-                                <span class="text-warning small">{{ stop.departure_time|time:"H:i" }}</span>
+                            <div class="text-center" style="flex: 1; z-index: 2;">
+                                <span class="text-white d-block small fw-bold" style="font-size: 0.75rem;">{{ stop.city.name }}</span>
+                                <span class="text-warning small" style="font-size: 0.8rem;">{{ stop.departure_time|time:"H:i" }}</span>
+                                <span class="text-warning small" style="font-size: 0.8rem;">{{ stop.get_day_of_week_display }}</span>
+
                             </div>
                             {% if not forloop.last %}
-                                <div class="mt-2 mx-1 border-top border-warning opacity-25" style="flex: 0.5;"></div>
+                                <div class="position-absolute border-top border-warning opacity-25"
+                                     style="top: 10px; left: calc({{ forloop.counter0 }} * 33% + 15%); width: 20%; z-index: 1;">
+                                </div>
                             {% endif %}
                         {% endfor %}
                     </div>
@@ -44,7 +50,7 @@
                         </label>
 
                         <div class="input-group">
-                            <span class="input-group-text glass-input border-end-0 text-warning bg-transparent" style="width: 45px; justify-content: center;">
+                            <span class="input-group-text glass-input border-end-0 text-warning bg-transparent" style="width: 45px; justify-content: center; border-color: rgba(255,255,255,0.2);">
                                 {% if field.name == 'trip_date' %}<i class="fas fa-calendar-day"></i>
                                 {% elif field.name == 'departure_point' %}<i class="fas fa-map-marker-alt"></i>
                                 {% elif field.name == 'arrival_point' %}<i class="fas fa-map-pin"></i>
@@ -54,8 +60,9 @@
                                 {% endif %}
                             </span>
 
-                            {# Додаємо клас glass-input через фільтр або віджети у forms.py #}
-                            {{ field }}
+                            <div class="flex-grow-1">
+                                {{ field }}
+                            </div>
                         </div>
 
                         {% if field.errors %}
@@ -67,8 +74,8 @@
                     {% endfor %}
 
                     <div class="mt-4">
-                        <button type="submit" class="btn glass-btn-registration w-100 py-3 fw-bold">
-                            <i class="fas fa-check-circle me-2"></i>ПІДТВЕРДИТИ БРОНЮВАННЯ
+                        <button type="submit" class="btn btn-warning w-100 py-3 fw-bold text-uppercase shadow" style="border-radius: 12px; letter-spacing: 1px;">
+                            <i class="fas fa-check-circle me-2"></i>Підтвердити бронювання
                         </button>
                         <a href="{% url 'booking_route_list' %}" class="btn btn-link w-100 text-white-50 mt-2 text-decoration-none small">
                             <i class="fas fa-arrow-left me-1"></i> Скасувати та повернутися
@@ -77,11 +84,29 @@
                 </form>
             </div>
 
-            <div class="mt-4 p-3 text-center text-white-50 small glass-card border-0" style="background: rgba(255, 193, 7, 0.05);">
+            <div class="mt-4 p-3 text-center text-white-50 small glass-card border-0" style="background: rgba(255, 193, 7, 0.05); border-radius: 15px;">
                 <i class="fas fa-info-circle text-warning me-2"></i>
-                Будь ласка, перевірте правильність введених даних перед підтвердженням.
+                Квиток буде доступний у вашому особистому кабінеті після підтвердження.
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    /* Стилізація полів форми, щоб вони вписувалися в дизайн */
+    .input-group input, .input-group select {
+        background: rgba(255, 255, 255, 0.05) !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        color: white !important;
+        border-radius: 0 10px 10px 0 !important;
+        padding: 10px 15px;
+    }
+    .input-group input:focus {
+        box-shadow: none;
+        border-color: #ffc107 !important;
+    }
+    .shadow-text {
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    }
+</style>
 {% endblock %}

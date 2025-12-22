@@ -14,7 +14,6 @@ class Route(models.Model):
     title = models.CharField(max_length=255, verbose_name="Назва маршруту")
     is_active = models.BooleanField(default=True, verbose_name="Активний")
 
-    # Змінюємо поле: тепер це дата, ДО якої діє ТОП
     top_until = models.DateTimeField(
         null=True,
         blank=True,
@@ -24,7 +23,6 @@ class Route(models.Model):
     class Meta:
         verbose_name = "Маршрут"
         verbose_name_plural = "Маршрути"
-        # Спочатку ті, у кого дата ТОП найбільша (майбутня), потім за ID
         ordering = ['-top_until', '-id']
 
     def __str__(self):
@@ -32,10 +30,25 @@ class Route(models.Model):
 
     @property
     def is_boosted(self):
-        """Перевіряє, чи активний ТОП на даний момент"""
         if self.top_until:
             return self.top_until > timezone.now()
         return False
+
+    # === ВСТАВЛЯЙТЕ СЮДИ (всередині класу Route) ===
+    def get_schedule_days(self):
+        # Отримуємо всі унікальні номери днів із зупинок цього маршруту
+        day_numbers = self.stops.values_list('day_of_week', flat=True).distinct().order_by('day_of_week')
+
+        # Словник для перетворення цифр у назви
+        days_map = {
+            1: 'Пн', 2: 'Вт', 3: 'Ср', 4: 'Чт', 5: 'Пт', 6: 'Сб', 7: 'Нд'
+        }
+
+        if not day_numbers:
+            return None
+
+        return ", ".join([days_map.get(d) for d in day_numbers])
+    # ===============================================
 
 class RouteStop(models.Model):
     DAYS_OF_WEEK = [

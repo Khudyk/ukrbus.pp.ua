@@ -85,6 +85,11 @@ class BookingRouteListView(ListView):
         return queryset
 
 
+
+
+from django.utils import timezone
+from django.contrib import messages
+
 class MakeBookingView(LoginRequiredMixin, CreateView):
     model = Booking
     form_class = BookingForm
@@ -93,33 +98,52 @@ class MakeBookingView(LoginRequiredMixin, CreateView):
 
     def get_initial(self):
         initial = super().get_initial()
-
         # Отримуємо дані з URL
         date_from_url = self.request.GET.get('date')
         start_city = self.request.GET.get('start_city')
         end_city = self.request.GET.get('end_city')
 
-        # Підставляємо у початкові значення форми
         if date_from_url:
             initial['trip_date'] = date_from_url
         if start_city:
             initial['departure_point'] = start_city
         if end_city:
             initial['arrival_point'] = end_city
-
         return initial
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
+        # Важливо: використовуйте ту ж назву параметра, що і в urls.py (route_id)
         kwargs['route'] = get_object_or_404(Route, id=self.kwargs.get('route_id'))
         return kwargs
 
     def get_context_data(self, **kwargs):
+        # Отримуємо базовий контекст
         context = super().get_context_data(**kwargs)
+        # Гарантуємо, що об'єкт 'route' потрапить у шаблон
         context['route'] = get_object_or_404(Route, id=self.kwargs.get('route_id'))
         return context
 
     def form_valid(self, form):
+        route = get_object_or_404(Route, id=self.kwargs.get('route_id'))
+        trip_date = form.cleaned_data.get('trip_date')
+        today = timezone.now().date()
+
+        # 1. Перевірка: Дата не в минулому
+        if trip_date < today:
+            form.add_error('trip_date', "Дата виїзду не може бути в минулому.")
+            return self.form_invalid(form)
+
+        # 2. Перевірка: День тижня (Пн=1, Нд=7)
+        target_day = trip_date.weekday() + 1
+        day_exists = route.stops.filter(day_of_week=target_day).exists()
+
+        if not day_exists:
+            form.add_error('trip_date',
+                f"За цим маршрутом немає рейсів у цей день ({trip_date.strftime('%d.%m.%Y')}).")
+            return self.form_invalid(form)
+
+        # Збереження
         form.instance.passenger = self.request.user
-        form.instance.route = get_object_or_404(Route, id=self.kwargs.get('route_id'))
+        form.instance.route = route
         return super().form_valid(form)
