@@ -25,7 +25,7 @@ def city_list_view(request):
     if city_name:
         city_list = city_list.filter(name__icontains=city_name)
 
- #   city_list = city_list.order_by('name') # <-- Тут відбувається сортування
+    city_list = city_list.order_by('name') # <-- Тут відбувається сортування
 
     city_list = City.objects.all().order_by(Lower('name'))
 

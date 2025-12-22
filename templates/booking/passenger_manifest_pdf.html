@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        @page {
+            size: A4;
+            margin: 1cm;
+        }
+        body {
+            font-family: 'DejaVuSans', sans-serif;
+            font-size: 9pt;
+            color: #000;
+        }
+        h2 { text-align: center; font-size: 16pt; margin-bottom: 10px; }
+        .header-info {
+            margin-bottom: 15px;
+            border-bottom: 2px solid #000;
+            padding-bottom: 5px;
+        }
+        .route-title {
+            background-color: #f0f0f0;
+            padding: 6px;
+            font-weight: bold;
+            font-size: 11pt;
+            border: 1px solid #000;
+            margin-top: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 5px;
+        }
+        th, td {
+            border: 1px solid #000;
+            padding: 5px;
+            text-align: left;
+        }
+        th { background-color: #eeeeee; font-size: 8pt; }
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+
+        /* СПЕЦІАЛЬНІ СТИЛІ ДЛЯ ПІДПИСУ (БЕЗ ТАБЛИЦЬ) */
+        .sig-container {
+            margin-top: 30px;
+            width: 100%;
+        }
+        .sig-left {
+            width: 45%;
+            float: left;
+        }
+        .sig-right {
+            width: 45%;
+            float: right;
+        }
+        .sig-line {
+            border-bottom: 1px solid #000;
+            height: 25px;
+            margin-bottom: 2px;
+        }
+        .sig-label {
+            font-size: 7pt;
+            color: #444;
+        }
+        .clearfix {
+            clear: both;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header-info">
+        <h2>Відомість пасажирів</h2>
+        <p><strong>Дата:</strong> {{ selected_date|date:"d.m.Y" }}
+           <span style="float: right;">UkrBus / LogiTrans</span>
+        </p>
+    </div>
+
+    {% for route, data in grouped_manifest.items %}
+        <div class="route-title">
+            РЕЙС: {{ route.title }}
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th width="5%">№</th>
+                    <th width="30%">Пасажир</th>
+                    <th width="20%">Телефон</th>
+                    <th width="10%" class="text-center">Місця</th>
+                    <th width="20%">Посадка</th>
+                    <th width="15%" class="text-right">Сума</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for b in data.list %}
+                <tr>
+                    <td class="text-center">{{ forloop.counter }}</td>
+                    <td><strong>{{ b.passenger.get_full_name|default:b.passenger.username }}</strong></td>
+                    <td>{{ b.passenger.passenger_profile.phone }}</td>
+                    <td class="text-center">{{ b.seats_count }}</td>
+                    <td>{{ b.departure_point }}</td>
+                    <td class="text-right">{{ b.total_price }} грн</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endfor %}
+</body>
+</html>

@@ -58,22 +58,16 @@ class RouteForm(forms.ModelForm):
 # inlineformset_factory створює зв'язку "Маршрут -> Зупинки"
 # Це дозволяє редагувати багато зупинок на одній сторінці з маршрутом
 RouteStopFormSet = inlineformset_factory(
-    Route,  # Батьківська модель
-    RouteStop,  # Дочірня модель
+    Route,
+    RouteStop,
     fields=('city', 'day_of_week', 'departure_time', 'order'),
-    extra=0,  # extra=0 означає не додавати порожніх форм при завантаженні (ми додаємо їх через JS)
-    can_delete=True,  # Дозволяє відзначати зупинки на видалення
+    extra=0,
+    can_delete=True,
     widgets={
         'city': forms.Select(attrs={'class': 'form-select glass-input text-white'}),
         'day_of_week': forms.Select(attrs={'class': 'form-select glass-input text-white'}),
-        # type="time" активує стандартний годинник у браузері
         'departure_time': forms.TimeInput(attrs={'class': 'form-control glass-input text-white', 'type': 'time'}),
-
-        # ПОЛЕ ORDER:
-        # Використовуємо HiddenInput, оскільки користувач не має вводити цифри вручну.
-        # Порядок визначається перетягуванням (SortableJS).
-        # ВАЖЛИВО: додаємо 'value': '1', щоб при створенні нової форми поле не було порожнім,
-        # що часто викликає помилку "Це поле обов'язкове".
-        'order': forms.HiddenInput(attrs={'class': 'order-input', 'value': '1'}),
+        # Використовуємо клас 'order-input' для зв'язку з вашим JS
+        'order': forms.HiddenInput(attrs={'class': 'order-input'}),
     }
 )

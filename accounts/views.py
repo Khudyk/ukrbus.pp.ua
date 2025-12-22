@@ -35,9 +35,9 @@ class CarrierSignUpView(CreateView):
 
 
 # --- Профіль ---
-
 @login_required
 def ProfileView(request):
+    # Перевіряємо, чи є користувач перевізником
     if request.user.is_carrier:
         routes = Route.objects.filter(carrier=request.user)
         incoming_bookings = Booking.objects.filter(route__carrier=request.user).order_by('-trip_date')
@@ -45,12 +45,17 @@ def ProfileView(request):
             'routes': routes,
             'incoming_bookings': incoming_bookings
         })
-    else:
-        my_bookings = Booking.objects.filter(passenger=request.user).order_by('-trip_date')
-        return render(request, 'accounts/profile_passenger.html', {
-            'bookings': my_bookings
-        })
 
+    # Логіка для ПАСАЖИРА
+    else:
+        # Використовуємо .count(), щоб отримати ТІЛЬКИ число записів у базі даних.
+        # Це значно швидше, бо Django не витягує всі деталі (дати, рейси, ціни) кожної поїздки.
+        bookings_count = Booking.objects.filter(passenger=request.user).count()
+
+        # Повертаємо шаблон профілю та передаємо ТІЛЬКИ кількість поїздок
+        return render(request, 'accounts/profile_passenger.html', {
+            'bookings_count': bookings_count  # Передаємо число під цим іменем
+        })
 
 # --- Статистика ---
 

@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Відомість пасажирів - UkrBus{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-white shadow-text mb-0">
+            <i class="fas fa-file-invoice me-2 text-success"></i>Відомість пасажирів
+        </h2>
+        <button onclick="window.print();" class="btn btn-outline-light shadow-sm no-print">
+            <i class="fas fa-print me-2"></i>Друкувати всі рейси
+        </button>
+    </div>
+
+    <div class="card glass-card border-0 mb-4 no-print">
+        <div class="card-body p-4">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label text-white-50 small">Дата поїздки</label>
+                    <input type="date" name="date" class="form-control glass-input text-white"
+                           value="{{ selected_date|default:'' }}" required>
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label text-white-50 small">Маршрут</label>
+                    <select name="route" class="form-select glass-input text-white">
+                        <option value="">Всі мої маршрути</option>
+                        {% for r in my_routes %}
+                            <option value="{{ r.id }}" {% if selected_route_id|stringformat:"i" == r.id|stringformat:"i" %}selected{% endif %}>
+                                {{ r.title }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary w-100 shadow-sm">
+                        <i class="fas fa-search me-2"></i>Показати
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% if grouped_manifest %}
+        <div class="row mb-4 no-print">
+            <div class="col-md-6">
+                <div class="glass-card p-3 text-center border-0">
+                    <p class="text-white-50 mb-0 small">Всього пасажирів на дату</p>
+                    <h3 class="text-success mb-0">{{ total_seats }}</h3>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="glass-card p-3 text-center border-0">
+                    <p class="text-white-50 mb-0 small">Очікувана виручка</p>
+                    <h3 class="text-warning mb-0">{{ total_money }} грн</h3>
+                </div>
+            </div>
+        </div>
+
+        {% for route, data in grouped_manifest.items %}
+            <div class="card glass-card border-0 mb-5 overflow-hidden shadow-lg print-section" id="route-{{ route.id }}">
+                <div class="card-header bg-primary bg-opacity-25 border-0 p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="text-white mb-0">
+                            <i class="fas fa-bus-alt me-2"></i>{{ route.title }}
+                        </h4>
+                        <div class="d-flex gap-2 align-items-center">
+                            <button onclick="printSingleRoute('route-{{ route.id }}')" class="btn btn-sm btn-light no-print" aria-label="Друк рейсу {{ route.title }}">
+                                <i class="fas fa-print me-1"></i>Друк рейсу
+                            </button>
+                            <span class="badge bg-light text-dark">
+                                Замовлень: {{ data.total_bookings }} | Місць: {{ data.total_seats }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover text-white align-middle mb-0">
+                        <thead class="bg-white bg-opacity-10 small text-uppercase fw-bold">
+                            <tr>
+                                <th class="ps-4">Пасажир</th>
+                                <th>Телефон</th>
+                                <th>Місця</th>
+                                <th>Посадка</th>
+                                <th>Висадка</th>
+                                <th>Статус</th>
+                                <th class="pe-4 text-end">Сума</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for b in data.list %}
+                            <tr class="border-bottom border-white border-opacity-10">
+                                <td class="ps-4">
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-sm me-2 bg-primary bg-opacity-50 rounded-circle text-center no-print" style="width: 30px; line-height: 30px; font-size: 0.8rem;">
+                                            {{ b.passenger.username|slice:":1"|upper }}
+                                        </div>
+                                        <span>{{ b.passenger.get_full_name|default:b.passenger.username }}</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if b.passenger.passenger_profile and b.passenger.passenger_profile.phone %}
+                                    <a href="tel:{{ b.passenger.passenger_profile.phone }}" class="text-white-50 text-decoration-none">
+                                        <i class="fas fa-phone-alt me-1 small text-primary no-print" aria-hidden="true"></i>
+                                        <span class="visually-hidden">Телефон:</span>
+                                        {{ b.passenger.passenger_profile.phone }}
+                                    </a>
+                                    {% else %}
+                                    <span class="text-white-50">—</span>
+                                    {% endif %}
+                                </td>
+                                <td><span class="badge rounded-pill bg-primary">{{ b.seats_count }}</span></td>
+                                <td><span class="text-info fw-bold">{{ b.departure_point }}</span></td>
+                                <td>{{ b.arrival_point }}</td>
+                                <td>
+                                    {% if b.status == 'confirmed' %}
+                                        <span class="badge bg-success text-uppercase" style="font-size: 0.7rem;">Підтверджено</span>
+                                    {% elif b.status == 'pending' %}
+                                        <span class="badge bg-warning text-dark text-uppercase" style="font-size: 0.7rem;">Очікує</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary text-uppercase" style="font-size: 0.7rem;">{{ b.get_status_display }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="pe-4 text-end fw-bold text-warning">{{ b.total_price }} грн</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="glass-card p-5 text-center border-0 shadow-lg">
+            {% if selected_date %}
+                <i class="fas fa-calendar-times fa-4x text-white-50 mb-3"></i>
+                <h4 class="text-white">На {{ selected_date }} бронювань не знайдено</h4>
+            {% else %}
+                <i class="fas fa-hand-pointer fa-4x text-white-50 mb-3"></i>
+                <h4 class="text-white">Оберіть дату для формування відомості</h4>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+
+<style>
+    /* Глобальні стилі скло-інтерфейсу */
+    .glass-card { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border-radius: 15px; }
+    .glass-input { background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.1); }
+    .glass-input:focus { background: rgba(255, 255, 255, 0.15); color: white; border-color: rgba(255, 255, 255, 0.3); box-shadow: none; }
+
+    /* Стилі для друку */
+    @media print {
+        /* Ховаємо елементи керування */
+        .no-print, .navbar, .footer, .btn, form, .avatar-sm { display: none !important; }
+
+        /* Логіка вибіркового друку */
+        body.single-print-active .print-section { display: none !important; }
+        body.single-print-active .selected-for-print { display: block !important; position: absolute; top: 0; width: 100%; }
+
+        /* Оформлення для паперу */
+        body { background: white !important; color: black !important; font-size: 9pt !important; }
+        .container { width: 100% !important; max-width: 100% !important; padding: 0 !important; }
+        .glass-card { background: transparent !important; border: 1px solid #ddd !important; box-shadow: none !important; margin-bottom: 20px !important; }
+
+        .table { color: black !important; width: 100% !important; border-collapse: collapse; font-size: 8.5pt !important; }
+        .table th, .table td { border: 1px solid #ccc !important; padding: 4px 6px !important; }
+
+        /* Текстові акценти */
+        .text-white, .text-white-50, .text-info, .text-warning { color: black !important; text-shadow: none !important; }
+        .badge { border: 1px solid black !important; color: black !important; background: transparent !important; }
+    }
+</style>
+
+<script>
+/**
+ * Функція для друку лише одного обраного маршруту
+ * Покращено: використовує onafterprint / matchMedia щоб гарантовано прибрати тимчасові класи
+ */
+function printSingleRoute(routeId) {
+    const element = document.getElementById(routeId);
+    if (!element) return;
+
+    document.body.classList.add('single-print-active');
+    element.classList.add('selected-for-print');
+
+    // Навіть якщо діалог друку закриють або відмінять, очищаємо стан після завершення друку
+    const cleanup = () => {
+        document.body.classList.remove('single-print-active');
+        element.classList.remove('selected-for-print');
+        // знімаємо слухачів
+        if (window.matchMedia) {
+            mediaQuery.removeListener(mediaHandler);
+        } else {
+            window.removeEventListener('afterprint', cleanup);
+        }
+    };
+
+    // Підтримка modern & legacy: matchMedia('print') або afterprint
+    let mediaQuery, mediaHandler;
+    if (window.matchMedia) {
+        mediaQuery = window.matchMedia('print');
+        mediaHandler = function(mqEvent) {
+            if (!mqEvent.matches) {
+                // друк завершено / вийшли з режиму друку
+                cleanup();
+            }
+        };
+        mediaQuery.addListener(mediaHandler);
+    } else {
+        // fallback
+        window.addEventListener('afterprint', cleanup);
+    }
+
+    // Відкриваємо діалог друку
+    window.print();
+
+    // Додатковий резервний таймаут щоб прибрати класи, якщо події не спрацювали
+    setTimeout(() => {
+        cleanup();
+    }, 1000);
+}
+</script>
+{% endblock %}

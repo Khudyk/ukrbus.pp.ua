@@ -75,7 +75,12 @@ class RouteStop(models.Model):
 
     route = models.ForeignKey(Route, on_delete=models.CASCADE, related_name='stops')
     city = models.ForeignKey(City, on_delete=models.CASCADE, verbose_name="Місто")
-    order = models.PositiveIntegerField(verbose_name="Порядок")
+    order = models.PositiveIntegerField(
+        verbose_name="Порядок",
+        default=1,
+        blank=True,
+        null=True
+    )
 
     # Нові поля: День тижня та Час
     day_of_week = models.IntegerField(choices=DAYS_OF_WEEK, verbose_name="День тижня")

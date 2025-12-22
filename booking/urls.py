@@ -1,8 +1,15 @@
 # booking/urls.py
 from django.urls import path
 
-from booking.views import CarrierBookingListView, PassengerBookingListView, CancelBookingView
-from .views import BookingRouteListView, MakeBookingView
+from .views import (
+    BookingRouteListView,
+    MakeBookingView,
+    CarrierBookingListView,
+    PassengerBookingListView,
+    CancelBookingView,
+    PassengerManifestView,
+    ExportPassengerPDFView,
+)
 
 urlpatterns = [
     path('', BookingRouteListView.as_view(), name='booking_route_list'),
@@ -10,5 +17,8 @@ urlpatterns = [
     path('bookings/', CarrierBookingListView.as_view(), name='carrier-bookings'),
     path('my-bookings/', PassengerBookingListView.as_view(), name='passenger-bookings'),
     path('booking/<int:booking_id>/cancel/', CancelBookingView.as_view(), name='cancel-booking'),
+
+    # Новий шлях для відомості (маніфесту)
+    path('manifest/', PassengerManifestView.as_view(), name='passenger_manifest'),
 
 ]

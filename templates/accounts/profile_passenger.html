@@ -19,54 +19,10 @@
 
             <hr class="border-light opacity-10">
 
-            <div class="mt-4">
-                <h5 class="text-warning mb-3"><i class="fas fa-ticket-alt me-2"></i>Мої бронювання</h5>
-
-                {% if bookings %}
-                    <div class="row g-3">
-                        {% for booking in bookings %}
-                        <div class="col-12">
-                            <div class="p-3 border rounded-3 border-light bg-dark bg-opacity-25 shadow-sm">
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <div>
-                                        <h6 class="text-white mb-1 fw-bold text-uppercase" style="letter-spacing: 0.5px;">
-                    <i class="fas fa-bus-alt text-warning me-2 small"></i>
-                    {% if booking.route.carrier.carrier_profile.company_name %}
-                        {{ booking.route.carrier.carrier_profile.company_name }}
-                    {% else %}
-                        {{ booking.route.carrier.get_full_name|default:booking.route.carrier.username }}
-                    {% endif %}
-                </h6>
-                                        <p class="small text-white-50 mb-0">
-                                            <i class="fas fa-map-marker-alt text-warning me-1"></i>
-                                            {{ booking.departure_point }} → {{ booking.arrival_point }}
-                                        </p>
-                                        <p class="small text-white-50">
-                                            <i class="fas fa-calendar-day me-1"></i> {{ booking.trip_date|date:"d.m.Y" }}
-                                        </p>
-                                    </div>
-                                    <div class="text-end">
-                                        <span class="badge bg-warning text-dark mb-1">Місць: {{ booking.seats_count }}</span>
-                                        <br>
-                                        <small class="text-info">{{ booking.contact_phone }}</small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    <div class="text-center py-5 border border-dashed border-light rounded-3 opacity-50" style="border-style: dashed !important;">
-                        <p class="mb-3">У вас поки немає активних бронювань.</p>
-                        <a href="{% url 'booking_route_list' %}" class="btn btn-sm glass-btn-warning">Знайти рейс</a>
-                    </div>
-                {% endif %}
-            </div>
-
             <div class="row mt-5 g-3">
                 <div class="col-6">
                     <div class="text-center p-3 glass-card bg-transparent">
-                        <h4 class="text-warning mb-0">{{ bookings.count|default:"0" }}</h4>
+                        <h4 class="text-warning mb-0">{{ bookings_count|default:"0" }}</h4>
                         <small class="text-white-50">Поїздок</small>
                     </div>
                 </div>

@@ -3,7 +3,6 @@ from django.urls import reverse_lazy
 from django.shortcuts import redirect
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.utils import timezone
-from django.db.models import Case, When, Value, BooleanField
 from django.contrib import messages
 from django.db import transaction
 
@@ -25,19 +24,18 @@ class RouteBaseView(LoginRequiredMixin):
         if self.request.POST:
             context['stops'] = RouteStopFormSet(self.request.POST, instance=self.object, prefix='stops')
         else:
-            # Для CreateView self.object спочатку None — це нормально
             context['stops'] = RouteStopFormSet(instance=self.object, prefix='stops')
         return context
 
     def form_valid(self, form):
-        # 1. Створюємо формсет прямо тут, щоб контролювати його стан
+        # 1. Створюємо формсет з POST даних
         stops = RouteStopFormSet(self.request.POST, instance=self.object, prefix='stops')
 
-        # 2. Перевіряємо обидві форми
+        # 2. Перевіряємо валідність обох форм
         if form.is_valid() and stops.is_valid():
             try:
                 with transaction.atomic():
-                    # Зберігаємо маршрут
+                    # Зберігаємо об'єкт маршруту (commit=False, щоб додати carrier)
                     self.object = form.save(commit=False)
 
                     if not self.object.pk:
@@ -46,7 +44,7 @@ class RouteBaseView(LoginRequiredMixin):
                         if not self.object.top_until:
                             self.object.top_until = timezone.now() + timezone.timedelta(days=1)
 
-                    # Логіка оплати ТОП
+                    # Логіка оплати ТОП (залишається без змін)
                     boost_days_raw = form.cleaned_data.get('boost_days')
                     boost_days = int(boost_days_raw) if boost_days_raw else 0
 
@@ -69,24 +67,38 @@ class RouteBaseView(LoginRequiredMixin):
                             else:
                                 messages.error(self.request, msg)
                         else:
-                            messages.error(self.request, "Недостатньо коштів.")
+                            messages.error(self.request, "Недостатньо коштів для активації ТОП.")
 
+                    # Зберігаємо фінальний стан маршруту
                     self.object.save()
 
-                    # 3. Зберігаємо зупинки
-                    stops.instance = self.object
-                    stops.save()
+                    # 3. ЗБЕРЕЖЕННЯ ЗУПИНОК З ПЕРЕРАХУНКОМ ПОРЯДКУ
+                    # commit=False дозволяє нам змінити поле 'order' перед записом у БД
+                    instances = stops.save(commit=False)
+
+                    # Спочатку видаляємо ті, що користувач позначив на видалення
+                    for obj in stops.deleted_objects:
+                        obj.delete()
+
+                    # Проходимо по кожній зупинці в тому порядку, в якому вони прийшли з форми
+                    # Це гарантує правильний порядок: 1, 2, 3...
+                    for index, stop_instance in enumerate(instances, start=1):
+                        stop_instance.route = self.object
+                        stop_instance.order = index  # Примусово записуємо правильний номер
+                        stop_instance.save()
+
+                    # Зберігаємо зв'язки many-to-many, якщо вони є (для City тощо)
+                    stops.save_m2m()
 
                 return redirect(self.success_url)
             except Exception as e:
-                messages.error(self.request, f"Помилка: {str(e)}")
+                messages.error(self.request, f"Критична помилка збереження: {str(e)}")
                 return self.form_invalid(form)
         else:
-            # Якщо формсет невалідний, виводимо помилки
+            # Якщо валідація не пройшла (наприклад, порожній order, якщо blank=False)
             return self.render_to_response(self.get_context_data(form=form, stops=stops))
 
     def form_invalid(self, form):
-        # Додаємо stops у контекст, щоб помилки відобразилися
         return self.render_to_response(self.get_context_data(form=form))
 
 

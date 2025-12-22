@@ -1,13 +1,22 @@
+import io
+import os
+from django.conf import settings
+from django.template.loader import get_template
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from xhtml2pdf import pisa
+
+
 from datetime import datetime
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q, Sum, Case, When, Value, IntegerField, F, OuterRef, Subquery, Exists
+from django.http import HttpResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.views import View
 from django.views.generic import ListView, CreateView
 from django.utils import timezone
 from django.contrib import messages
-
 from booking.forms import BookingForm
 from booking.models import Booking
 from trips.models import Route, RouteStop, City
@@ -227,3 +236,115 @@ class CancelBookingView(LoginRequiredMixin, View):
             messages.info(request, "Це бронювання вже було скасовано.")
 
         return redirect('passenger-bookings')
+
+
+class PassengerManifestView(LoginRequiredMixin, ListView):
+    model = Booking
+    template_name = 'booking/passenger_manifest.html'
+    context_object_name = 'bookings'
+
+    def get_queryset(self):
+        date_str = self.request.GET.get('date')
+        route_id = self.request.GET.get('route')
+
+        if not date_str:
+            return Booking.objects.none()
+
+        try:
+            target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+
+            # Базовий запит з усіма зв'язками
+            queryset = Booking.objects.filter(
+                trip_date=target_date,
+                route__carrier=self.request.user
+            ).exclude(status='cancelled').select_related(
+                'passenger', 'route', 'passenger__passenger_profile'
+            )
+
+            # Фільтр по конкретному маршруту
+            if route_id and route_id.strip():
+                queryset = queryset.filter(route_id=int(route_id))
+
+            # --- ЛОГІКА СОРТУВАННЯ ЗА МІСЦЕМ ПОСАДКИ ---
+            # Шукаємо порядковий номер (order) для зупинки, назва якої збігається з містом посадки
+            dep_order_subquery = RouteStop.objects.filter(
+                route=OuterRef('route'),
+                city__name__icontains=OuterRef('departure_point')
+            ).values('order')[:1]
+
+            return queryset.annotate(
+                dep_order=Subquery(dep_order_subquery)
+            ).order_by('route__id', 'dep_order', 'departure_point')
+            # Сортуємо: спочатку по маршруту, потім по черзі зупинок, потім за назвою (якщо order однаковий)
+
+        except (ValueError, TypeError):
+            return Booking.objects.none()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['my_routes'] = Route.objects.filter(carrier=self.request.user)
+        context['selected_date'] = self.request.GET.get('date', '')
+
+        qs = self.get_queryset()
+        grouped = {}
+        total_seats_sum = 0
+        total_bookings_sum = 0
+        total_money_sum = 0
+
+        for b in qs:
+            if b.route not in grouped:
+                grouped[b.route] = {
+                    'list': [],
+                    'total_seats': 0,
+                    'total_bookings': 0  # Кількість замовлень для кожного маршруту окремо
+                }
+
+            grouped[b.route]['list'].append(b)
+            # Сумуємо кількість місць
+            grouped[b.route]['total_seats'] += b.seats_count
+            # Рахуємо кількість бронювань
+            grouped[b.route]['total_bookings'] += 1
+
+            # Загальна статистика для всієї сторінки
+            total_seats_sum += b.seats_count
+            total_bookings_sum += 1
+            total_money_sum += b.total_price
+
+        context['grouped_manifest'] = grouped
+        context['total_seats'] = total_seats_sum
+        context['total_bookings'] = total_bookings_sum
+        context['total_money'] = total_money_sum
+        return context
+
+
+class ExportPassengerPDFView(LoginRequiredMixin, View):
+    def get(self, request, grouped=None, target_date=None, *args, **kwargs):
+        # ... (ваш код отримання дати та queryset) ...
+
+        # --- ОСЬ ТУТ ВСТАВЛЯЄМО РЕЄСТРАЦІЮ ШРИФТУ ---
+        font_path = os.path.join(settings.BASE_DIR, 'static', 'fonts', 'DejaVuSans.ttf')
+
+        # Перевіряємо, чи файл фізично існує, щоб не було нової помилки
+        if not os.path.exists(font_path):
+            return HttpResponse(f"Шрифт не знайдено за шляхом: {font_path}", status=500)
+
+        pdfmetrics.registerFont(TTFont('DejaVuSans', font_path))
+        # --------------------------------------------
+
+        context = {
+            'grouped_manifest': grouped,
+            'selected_date': target_date,
+            # font_path у контексті більше не потрібен, якщо ми зареєстрували його тут
+        }
+
+        template = get_template('booking/passenger_manifest_pdf.html')
+        html = template.render(context)
+
+        result = io.BytesIO()
+        # Створюємо PDF
+        pdf = pisa.pisaDocument(
+            io.BytesIO(html.encode("UTF-8")),
+            result,
+            encoding='UTF-8'
+        )
+        # ... (решта коду з HttpResponse)
