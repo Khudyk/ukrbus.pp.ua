@@ -3,9 +3,11 @@
         <a class="navbar-brand fw-bold shadow-text" href="/">
             <i class="fas fa-bus-alt me-2 text-primary"></i>UkrBus.pp.ua
         </a>
+
         <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
             <span class="navbar-toggler-icon"></span>
         </button>
+
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                 <li class="nav-item">
@@ -18,37 +20,70 @@
                         <i class="fas fa-globe-europe me-1 text-primary"></i>Напрямки
                     </a>
                 </li>
+
+                {% if user.is_authenticated %}
+                    {% if user.is_carrier %}
+                        <li class="nav-item">
+                            <a class="nav-link text-white opacity-75" href="{% url 'carrier-bookings' %}">
+                                <i class="fas fa-clipboard-list me-1 text-warning"></i>Управління замовленнями
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link text-white opacity-75" href="{% url 'passenger-bookings' %}">
+                                <i class="fas fa-ticket-alt me-1 text-info"></i>Мої поїздки
+                            </a>
+                        </li>
+                    {% endif %}
+                {% endif %}
             </ul>
+
             <ul class="navbar-nav ms-auto align-items-center">
-{% if user.is_authenticated %}
-    <li class="nav-item dropdown">
-        <a class="nav-link dropdown-toggle text-light fw-medium d-flex align-items-center"
-           href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-            <i class="fas fa-user-circle fa-lg me-2 text-primary"></i>
-            {{ user.username }}
-        </a>
-        <ul class="dropdown-menu dropdown-menu-end glass-dropdown border-0 shadow-lg mt-2" aria-labelledby="userDropdown">
-            <li>
-                <a class="dropdown-item py-2" href="{% url 'profile' %}">
-                    <i class="fas fa-id-card text-primary me-2"></i> Профіль
-                </a>
-            </li>
-            <li>
-                <a class="dropdown-item py-2" href="{% url 'statistics' %}"> <i class="fas fa-chart-line text-info me-2"></i> Статистика
-                </a>
-            </li>
-            <li><hr class="dropdown-divider opacity-10"></li>
-            <li>
-                <form action="{% url 'logout' %}" method="post" class="px-3 py-1">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-danger btn-sm w-100" style="border-radius: 8px;">
-                        <i class="fas fa-sign-out-alt me-1"></i> Вийти
-                    </button>
-                </form>
-            </li>
-        </ul>
-    </li>
-{% else %}
+                {% if user.is_authenticated %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle text-light fw-medium d-flex align-items-center"
+                           href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-user-circle fa-lg me-2 text-primary"></i>
+                            {{ user.username }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end glass-dropdown border-0 shadow-lg mt-2" aria-labelledby="userDropdown">
+                            <li>
+                                <a class="dropdown-item py-2" href="{% url 'profile' %}">
+                                    <i class="fas fa-id-card text-primary me-2"></i> Профіль
+                                </a>
+                            </li>
+
+                            {% if user.is_carrier %}
+                                <li>
+                                    <a class="dropdown-item py-2" href="{% url 'carrier-bookings' %}">
+                                        <i class="fas fa-concierge-bell text-warning me-2"></i> Панель перевізника
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item py-2" href="{% url 'statistics' %}">
+                                        <i class="fas fa-chart-line text-info me-2"></i> Статистика
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li>
+                                    <a class="dropdown-item py-2" href="{% url 'passenger-bookings' %}">
+                                        <i class="fas fa-history text-info me-2"></i> Історія квитків
+                                    </a>
+                                </li>
+                            {% endif %}
+
+                            <li><hr class="dropdown-divider opacity-10"></li>
+                            <li>
+                                <form action="{% url 'logout' %}" method="post" class="px-3 py-1">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger btn-sm w-100" style="border-radius: 8px;">
+                                        <i class="fas fa-sign-out-alt me-1"></i> Вийти
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </li>
+                {% else %}
                     <li class="nav-item">
                         <a class="nav-link text-white-50 px-3" href="{% url 'login' %}">Увійти</a>
                     </li>

@@ -42,3 +42,4 @@ class CarrierProfile(models.Model):
     def has_sufficient_funds(self, amount):
         """Перевірка, чи достатньо грошей на балансі"""
         return self.balance >= amount
+

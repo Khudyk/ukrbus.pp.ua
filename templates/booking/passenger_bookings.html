@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    /* Стилі Glassmorphism та кнопок */
+    .transition-hover-row:hover {
+        background: rgba(255, 255, 255, 0.03);
+        transition: background 0.3s ease;
+    }
+
+    .btn-cancel {
+        color: #ff4d4d;
+        border: 1px solid rgba(255, 77, 77, 0.3);
+        background: rgba(255, 77, 77, 0.05);
+        font-size: 0.75rem;
+        padding: 4px 12px;
+        border-radius: 8px;
+        transition: 0.3s;
+    }
+
+    .btn-cancel:hover {
+        background: #ff4d4d;
+        color: white;
+        box-shadow: 0 0 15px rgba(255, 77, 77, 0.4);
+    }
+
+    .status-past {
+        font-size: 0.7rem;
+        color: rgba(255, 255, 255, 0.4);
+        font-style: italic;
+    }
+</style>
+
+<div class="container mt-4 pb-5">
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-dismissible fade show glass-card border-0 mb-4 text-white" role="alert" style="background: rgba(255,255,255,0.1); border-left: 4px solid #0dcaf0 !important;">
+                <i class="fas fa-info-circle me-2 text-info"></i> {{ message }}
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-white fw-bold mb-0">
+            <i class="fas fa-ticket-alt me-2 text-primary"></i>Мої бронювання
+        </h2>
+        <span class="badge bg-primary rounded-pill px-3 py-2">Квитків: {{ bookings.count }}</span>
+    </div>
+
+    <div class="glass-card p-0 overflow-hidden border-0 shadow-lg">
+        <div class="table-responsive">
+            <table class="table align-middle mb-0 text-white">
+                <thead class="">
+                    <tr>
+                        <th class="ps-4 py-3">Маршрут / Дата</th>
+                        <th>Звідки / Куди</th>
+                        <th class="text-center">Місць</th>
+                        <th>Статус</th>
+                        <th class="pe-4 text-end">Ціна & Дія</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for b in bookings %}
+                    <tr class="transition-hover-row border-bottom border-white border-opacity-5">
+                        <td class="ps-4 py-3">
+                            <div class="fw-bold text-primary">{{ b.route.title }}</div>
+                            <div class="small opacity-50"><i class="far fa-calendar-alt me-1"></i>{{ b.trip_date|date:"d.m.Y" }}</div>
+                        </td>
+                        <td>
+                            <div class="small">
+                                {{ b.departure_point }}
+                                <i class="fas fa-arrow-right mx-1 text-white-50" style="font-size: 0.7rem;"></i>
+                                {{ b.arrival_point }}
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-dark border border-white border-opacity-10">{{ b.seats_count }}</span>
+                        </td>
+                        <td>
+                            {% if b.status == 'pending' %}
+                                <span class="badge rounded-pill bg-warning text-dark px-3">Очікує</span>
+                            {% elif b.status == 'confirmed' %}
+                                <span class="badge rounded-pill bg-success px-3 shadow-glow">Підтверджено</span>
+                            {% else %}
+                                <span class="badge rounded-pill bg-danger bg-opacity-50 px-3">Скасовано</span>
+                            {% endif %}
+                        </td>
+                        <td class="pe-4 text-end">
+                            <div class="fw-bold mb-1">{{ b.total_price }} грн</div>
+
+                            {# ЛОГІКА КНОПКИ: Тільки якщо статус не скасовано ТА дата ще не минула #}
+                            {% if b.status != 'cancelled' %}
+                                {% if b.trip_date >= today_date %}
+                                    <form action="{% url 'cancel-booking' b.id %}" method="post"
+                                          onsubmit="return confirm('Ви впевнені, що хочете скасувати це бронювання?');">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-cancel">
+                                            <i class="fas fa-times me-1"></i> Скасувати
+                                        </button>
+                                    </form>
+                                {% else %}
+                                    <span class="status-past"><i class="fas fa-check me-1"></i>Завершено</span>
+                                {% endif %}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center py-5 opacity-50">
+                            <i class="fas fa-folder-open fa-3x mb-3 d-block"></i>
+                            У вас ще немає бронювань.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

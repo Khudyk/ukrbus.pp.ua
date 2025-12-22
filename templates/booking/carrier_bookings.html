@@ -1,0 +1,188 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    /* Кастомізація випадаючих списків для Glassmorphism */
+    .glass-select {
+        background-color: rgba(255, 255, 255, 0.05) !important;
+        color: white !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23ffffff'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e") !important;
+        background-repeat: no-repeat !important;
+        background-position: right 0.75rem center !important;
+        background-size: 16px 12px !important;
+        padding-right: 2.5rem !important;
+    }
+
+    /* Стиль для варіантів вибору (dropdown menu) */
+    .glass-select option {
+        background-color: #1a1d21 !important; /* Темний фон замість білого */
+        color: white !important;
+    }
+
+    .avatar-circle {
+        width: 40px; height: 40px;
+        background: linear-gradient(135deg, #0d6efd, #0dcaf0);
+        border-radius: 50%; display: flex; align-items: center; justify-content: center;
+        font-weight: bold; color: white; border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    /* Фікс для запобігання накладанню елементів */
+    .filter-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        align-items: flex-end;
+    }
+</style>
+
+<div class="container mt-4 pb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-white fw-bold mb-0">
+            <i class="fas fa-clipboard-list me-2 text-primary"></i>Управління бронюваннями
+        </h2>
+        <span class="badge bg-primary rounded-pill px-3 py-2 shadow-glow">Записів: {{ bookings.count }}</span>
+    </div>
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-dismissible fade show glass-card border-0 mb-4 {% if message.tags == 'success' %}text-success{% else %}text-warning{% endif %}" role="alert" style="background: rgba(255,255,255,0.1);">
+            <i class="fas {% if message.tags == 'success' %}fa-check-circle{% else %}fa-exclamation-circle{% endif %} me-2"></i>
+            {{ message }}
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endfor %}
+{% endif %}
+    <div class="glass-card p-4 mb-4 border-0 shadow-lg">
+        <form method="get">
+            <div class="row g-3">
+                <div class="col-12">
+                    <div class="position-relative">
+                        <i class="fas fa-search position-absolute top-50 start-0 translate-middle-y ms-3 text-white-50"></i>
+                        <input type="text" name="search" class="glass-input ps-5 w-100" style="height: 50px;"
+                               placeholder="Пошук за пасажиром, телефоном..." value="{{ request.GET.search }}">
+                    </div>
+                </div>
+
+                <div class="col-lg-3 col-md-6">
+                    <label class="text-white-50 small mb-2 ms-1">Напрямок</label>
+                    <select name="route" class="glass-input glass-select w-100" style="height: 45px;">
+                        <option value="">Всі напрямки</option>
+                        {% for r in my_routes %}
+                            <option value="{{ r.id }}" {% if request.GET.route == r.id|stringformat:"i" %}selected{% endif %}>{{ r.title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-lg-2 col-md-6">
+                    <label class="text-white-50 small mb-2 ms-1">Статус</label>
+                    <select name="status" class="glass-input glass-select w-100" style="height: 45px;">
+                        <option value="">Всі статуси</option>
+                        {% for val, label in status_choices %}
+                            <option value="{{ val }}" {% if request.GET.status == val %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-lg-2 col-md-6">
+                    <label class="text-white-50 small mb-2 ms-1">Дата з</label>
+                    <input type="date" name="date_from" class="glass-input w-100" style="height: 45px;" value="{{ request.GET.date_from }}">
+                </div>
+
+                <div class="col-lg-2 col-md-6">
+                    <label class="text-white-50 small mb-2 ms-1">Дата по</label>
+                    <input type="date" name="date_to" class="glass-input w-100" style="height: 45px;" value="{{ request.GET.date_to }}">
+                </div>
+
+                <div class="col-lg-3 col-md-12 d-flex align-items-end gap-2">
+                    <button type="submit" class="btn glass-btn-registration w-100" style="height: 45px;">ФІЛЬТРУВАТИ</button>
+                    <a href="{% url 'carrier-bookings' %}" class="btn btn-outline-light d-flex align-items-center justify-content-center" style="height: 45px; width: 55px; border-radius: 12px;">
+                        <i class="fas fa-sync-alt"></i>
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="row mb-4 g-3 text-white">
+        <div class="col-md-6">
+            <div class="glass-card p-3 d-flex align-items-center border-0" style="border-left: 4px solid #0dcaf0 !important;">
+                <div class="bg-info bg-opacity-10 p-3 rounded-circle me-3"><i class="fas fa-users text-info"></i></div>
+                <div>
+                    <div class="small text-white-50 uppercase">Місць</div>
+                    <div class="h4 mb-0 fw-bold">{{ total_seats|default:0 }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="glass-card p-3 d-flex align-items-center border-0" style="border-left: 4px solid #198754 !important;">
+                <div class="bg-success bg-opacity-10 p-3 rounded-circle me-3"><i class="fas fa-wallet text-success"></i></div>
+                <div>
+                    <div class="small text-white-50 uppercase">Сума</div>
+                    <div class="h4 mb-0 fw-bold">{{ total_money|default:0 }} грн</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="glass-card p-0 overflow-hidden border-0 shadow-lg">
+        <div class="table-responsive">
+            <table class="table align-middle mb-0 text-white">
+                <thead >
+                    <tr>
+                        <th class="ps-4 py-3">Пасажир</th>
+                        <th>Маршрут</th>
+                        <th class="text-center">Місць</th>
+                        <th>Статус</th>
+                        <th class="pe-4 text-end">Деталі</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for booking in bookings %}
+                    <tr class="stop-row border-bottom border-white border-opacity-5">
+                        <td class="ps-4 py-3">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-circle me-3">{{ booking.passenger.username|slice:":1"|upper }}</div>
+                                <div>
+                                    <div class="fw-bold">{{ booking.passenger.get_full_name|default:booking.passenger.username }}</div>
+                                    <div class="small text-white-50">{{ booking.passenger.passenger_profile.phone|default:"---" }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="fw-bold text-primary small">{{ booking.route.title }}</div>
+                            <div class="small opacity-50">{{ booking.departure_point }} → {{ booking.arrival_point }}</div>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-dark px-3">{{ booking.seats_count }}</span>
+                        </td>
+                        <td>
+           <form method="post" class="d-flex align-items-center">
+    {% csrf_token %}
+    <input type="hidden" name="booking_id" value="{{ booking.id }}">
+
+    <select name="status" onchange="this.form.submit()"
+            class="glass-input glass-select py-1 px-2 border-0"
+            style="width: auto; height: 35px; font-size: 0.8rem; cursor: pointer;">
+        {% for val, label in status_choices %}
+            <option value="{{ val }}" {% if booking.status == val %}selected{% endif %}>
+                {{ label }}
+            </option>
+        {% endfor %}
+    </select>
+</form>
+                        </td>
+                        <td class="pe-4 text-end">
+                            <div class="fw-bold">{{ booking.trip_date|date:"d.m.Y" }}</div>
+                            <div class="text-info small fw-bold">{{ booking.total_price }} грн</div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5" class="text-center py-5 opacity-50 italic">Бронювань не знайдено</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
