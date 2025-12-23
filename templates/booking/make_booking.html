@@ -17,11 +17,6 @@
                             <div class="h3 fw-bold mb-0 text-gradient-gold">{{ request.GET.start_city }}</div>
                         </div>
 
-                        <div class="flex-grow-1 px-2 text-center position-relative">
-                            <div class="route-line-booking"></div>
-                            <i class="fas fa-bus text-primary bus-icon-overlap"></i>
-                        </div>
-
                         <div class="text-end" style="width: 42%;">
                             <div class="text-white-50 small text-uppercase mb-1">Прибуття</div>
                             <div class="h3 fw-bold mb-0 text-gradient-gold">{{ request.GET.end_city }}</div>
@@ -32,9 +27,7 @@
                         <div class="text-white-50 small">
                             <i class="fas fa-id-badge text-primary me-2"></i>{{ route.carrier.carrier_profile.company_name|default:route.carrier.username }}
                         </div>
-                        <div class="text-white-50 small">
-                            <i class="fas fa-road text-warning me-2"></i>{{ distance }} км
-                        </div>
+
                     </div>
                 </div>
 

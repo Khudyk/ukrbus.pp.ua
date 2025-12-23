@@ -23,16 +23,7 @@
                     </div>
                 </div>
 
-                <div class="mx-4 flex-grow-1 position-relative">
-                    <div class="route-line" style="opacity: 0.6; height: 3px;">
-                        <i class="fas fa-bus text-primary bg-dark px-3" style="font-size: 1.2rem; transform: translate(-50%, -50%);"></i>
-                    </div>
-                    {% if route.calculated_distance %}
-                        <div class="text-primary-subtle mt-3 fw-bold font-monospace" style="letter-spacing: 1px;">
-                            {{ route.calculated_distance }} км
-                        </div>
-                    {% endif %}
-                </div>
+
 
                 <div class="arrival text-end">
                     <div class="h1 text-white fw-bold mb-0"> {% with s=route.stops.all|dictsort:"order"|last %}{{ s.departure_time|time:"H:i" }}{% endwith %}
