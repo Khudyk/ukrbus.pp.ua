@@ -1,25 +1,10 @@
-from django.conf import settings
-from django.conf.urls.static import static
-from django.contrib.auth import views as auth_views
-from django.contrib.sitemaps import Sitemap
-from django.contrib.sitemaps.views import sitemap
-from django.urls import path, include
-
+from django.urls import path
 from . import views
 
-from .views import *
-
-
-from django.contrib.sitemaps import Sitemap
-
-
+app_name = 'city'  # ЦЕ ВАЖЛИВО
 
 urlpatterns = [
-
-
-    # --- Міста ---
-    path('list/', city_list_view, name='city_list'),
-    path('<int:city_id>/', city_detail_view, name='city_detail'),
-
+    path('list/', views.city_list_view, name='city_list'),
+    path('autocomplete/', views.city_autocomplete, name='city_autocomplete'),
+    path('<int:city_id>/', views.city_detail_view, name='city_detail'),
 ]
-

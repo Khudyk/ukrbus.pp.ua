@@ -80,6 +80,8 @@
                     <table class="table table-hover text-white align-middle mb-0">
                         <thead class="bg-white bg-opacity-10 small text-uppercase fw-bold">
                             <tr>
+
+                                <th class="ps-4">№</th>
                                 <th class="ps-4">Пасажир</th>
                                 <th>Телефон</th>
                                 <th>Місця</th>
@@ -92,6 +94,7 @@
                         <tbody>
                             {% for b in data.list %}
                             <tr class="border-bottom border-white border-opacity-10">
+                                <td class="fw-bold text-primary">{{ b.id }}</td>
                                 <td class="ps-4">
                                     <div class="d-flex align-items-center">
                                         <div class="avatar-sm me-2 bg-primary bg-opacity-50 rounded-circle text-center no-print" style="width: 30px; line-height: 30px; font-size: 0.8rem;">

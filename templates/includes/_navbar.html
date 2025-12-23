@@ -16,10 +16,15 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link text-white opacity-75" href="{% url 'city_list' %}">
-                        <i class="fas fa-globe-europe me-1 text-primary"></i>Міста
-                    </a>
+<a class="nav-link text-white opacity-75" href="{% url 'city:city_list' %}">
+    <i class="fas fa-globe-europe me-1 text-primary"></i>Міста
+</a>
                 </li>
+                <li class="nav-item">
+    <a class="nav-link text-white opacity-75" href="{% url 'news:news_list' %}">
+        <i class="fas fa-newspaper me-1 text-primary"></i>Новини
+    </a>
+</li>
 
                 {% if user.is_authenticated %}
                     {% if user.is_carrier %}

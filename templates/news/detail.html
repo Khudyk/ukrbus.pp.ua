@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-xl-8">
+            
+
+
+            <article class="glass-card overflow-hidden shadow-glow border-0 rounded-5 animate__animated animate__fadeInUp">
+                
+                {% if post.image %}
+                <div class="news-detail-image-wrapper position-relative">
+                    <img src="{{ post.image.url }}" class="img-fluid w-100" alt="{{ post.title }}" style="max-height: 500px; object-fit: cover;">
+                    <div class="image-overlay-gradient"></div>
+                </div>
+                {% endif %}
+
+                <div class="p-4 p-md-5 bg-dark bg-opacity-20 text-white">
+                    <div class="d-flex align-items-center mb-4 text-white-50 small fw-bold">
+                        <span class="badge bg-primary rounded-pill px-3 py-2 me-3">Новина</span>
+                        <span><i class="far fa-calendar-alt me-2"></i>{{ post.created_at|date:"d F Y" }}</span>
+                    </div>
+
+                    <h1 class="display-5 fw-bold mb-4 text-gradient-gold">{{ post.title }}</h1>
+
+                    <hr class="border-white border-opacity-10 my-4">
+
+                    <div class="news-content-text lh-lg fs-5 text-white-50">
+                        {{ post.content|linebreaks }}
+                    </div>
+
+
+                </div>
+            </article>
+  <div class="mb-4 animate__animated animate__fadeIn">
+                <a href="{% url 'news:news_list' %}" class="text-white-50 text-decoration-none hover-white transition-all">
+                    <i class="fas fa-arrow-left me-2"></i> Назад до всіх новин
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Ефекти накладання на зображення */
+    .news-detail-image-wrapper {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .image-overlay-gradient {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 100px;
+        background: linear-gradient(to top, rgba(0,0,0,0.5), transparent);
+    }
+
+    /* Стилізація контенту */
+    .news-content-text {
+        text-align: justify;
+    }
+
+    .text-gradient-gold {
+        background: linear-gradient(180deg, #FFFFFF 0%, #BCBCBC 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .glass-card {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .hover-white:hover {
+        color: white !important;
+    }
+
+    .transition-all {
+        transition: all 0.3s ease;
+    }
+
+    .hover-primary:hover {
+        color: #0d6efd !important;
+        transition: 0.3s ease;
+    }
+
+    .shadow-glow {
+        box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
+    }
+</style>
+{% endblock %}

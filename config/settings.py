@@ -1,6 +1,6 @@
-
 import os
 from pathlib import Path
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-q&17oamv-====%s^^%6dsyusf@q&aegim+sveers#^2n64feq&'
 DEBUG = True
@@ -18,6 +18,7 @@ INSTALLED_APPS = [
     'trips',
     'booking',
     'billing',
+    'news',
 ]
 AUTH_USER_MODEL = 'accounts.User'
 LOGIN_REDIRECT_URL = 'home'  # або назва вашої View
