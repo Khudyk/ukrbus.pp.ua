@@ -93,3 +93,14 @@ class RouteStop(models.Model):
 
     def __str__(self):
         return f"{self.get_day_of_week_display()} {self.departure_time} - {self.city.name}"
+
+class DistanceCache(models.Model):
+    city_from = models.ForeignKey(City, on_delete=models.CASCADE, related_name='from_distances')
+    city_to = models.ForeignKey(City, on_delete=models.CASCADE, related_name='to_distances')
+    distance_km = models.DecimalField(max_digits=10, decimal_places=2)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('city_from', 'city_to')
+        verbose_name = "Кеш відстані"
+        verbose_name_plural = "Кеш відстаней"

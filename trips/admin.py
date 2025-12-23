@@ -1,5 +1,6 @@
+
+from .models import Route, RouteStop , DistanceCache
 from django.contrib import admin
-from .models import Route, RouteStop
 
 
 class RouteStopInline(admin.TabularInline):
@@ -33,3 +34,34 @@ class RouteAdmin(admin.ModelAdmin):
         super().save_model(request, obj, form, change)
 
 
+
+
+
+
+@admin.register(DistanceCache)
+class DistanceCacheAdmin(admin.ModelAdmin):
+    # Відображення колонок у списку
+    list_display = ('city_from', 'city_to', 'distance_km', 'created_at')
+
+    # Фільтрація за містами
+    list_filter = ('city_from', 'city_to')
+
+    # Пошук за назвою міст
+    search_fields = ('city_from__name', 'city_to__name')
+
+    # Можливість швидкого редагування відстані прямо у списку
+    list_editable = ('distance_km',)
+
+    # Тільки для читання дата створення
+    readonly_fields = ('created_at',)
+
+    # Організація полів у формі редагування
+    fieldsets = (
+        (None, {
+            'fields': ('city_from', 'city_to', 'distance_km')
+        }),
+        ('Метадані', {
+            'fields': ('created_at',),
+            'classes': ('collapse',)  # Приховати за замовчуванням
+        }),
+    )

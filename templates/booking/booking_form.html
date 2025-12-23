@@ -1,105 +1,76 @@
 {% extends 'base.html' %}
-
 {% block content %}
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-8 col-lg-6">
-            <div class="glass-card p-4 animate-fade-in">
-                <div class="text-center mb-4">
-                    <h2 class="text-white fw-bold shadow-text">Оформлення квитка</h2>
 
-                </div>
-
-                <div class="mb-4 p-3 rounded glass-input" style="background: rgba(255,255,255,0.03);">
-                    <p class="text-white-50 small mb-3 text-uppercase fw-bold text-center" style="letter-spacing: 1px;">Деталі рейсу</p>
-                    <p class="text-white-50 small mb-3 text-uppercase fw-bold text-center" style="letter-spacing: 1px;">Перевізник:
-            {% if route.carrier.carrier_profile.company_name %}
-                {{ route.carrier.carrier_profile.company_name }}
-            {% elif route.carrier.company_name %}
-                {{ route.carrier.company_name }}
-            {% else %}
-                {{ route.carrier.get_full_name|default:route.carrier.username }}
-            {% endif %}
-         </p>
-                    <div class="d-flex justify-content-between align-items-start px-2">
-                        {% for stop in route.stops.all|dictsort:"order" %}
-                            <div class="text-center" style="flex: 1;">
-                                <span class="text-white d-block small fw-bold">{{ stop.city.name }}</span>
-                                <span class="text-warning small">{{ stop.departure_time|time:"H:i" }}</span>
-                            </div>
-                            {% if not forloop.last %}
-                                <div class="mt-2 mx-1 border-top border-warning opacity-25" style="flex: 0.5;"></div>
-                            {% endif %}
-                        {% endfor %}
-                    </div>
-                    <div class="row g-2 mt-2">
-        {% if route.is_passenger %}
-        <div class="col-6">
-            <div class="p-2 rounded price-badge-glass text-center animate-fade-in">
-                <small class="text-white-50 d-block">Місце від</small>
-                <span class="text-white fw-bold">{{ route.min_trip_price|floatformat:0 }} ₴</span>
-            </div>
-        </div>
-        {% endif %}
-        {% if route.is_parcel %}
-        <div class="col-6">
-            <div class="p-2 rounded price-badge-glass text-center animate-fade-in">
-                <small class="text-white-50 d-block">Посилка від</small>
-                <span class="text-white fw-bold">{{ route.min_parcel_price|floatformat:0 }} ₴</span>
-            </div>
-        </div>
-        {% endif %}
-    </div>
-                </div>
-
-                <form method="post" novalidate>
-                    {% csrf_token %}
-
-                    {% for field in form %}
-                    <div class="mb-3">
-                        <label for="{{ field.id_for_label }}" class="form-label text-white-50 small ms-1">
-                            {{ field.label }}
-                        </label>
-
+<div class="container mt-4">
+    <div class="row justify-content-center mb-5">
+        <div class="col-lg-10">
+            <div class="glass-card mt-n5 shadow-lg p-4" style="overflow: visible !important;">
+                <form action="{% url 'booking_route_list' %}" method="GET" class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label small text-white-50">Звідки</label>
                         <div class="input-group">
-                            <span class="input-group-text glass-input border-end-0 text-warning bg-transparent" style="width: 45px; justify-content: center;">
-                                {% if field.name == 'trip_date' %}<i class="fas fa-calendar-day"></i>
-                                {% elif field.name == 'departure_point' %}<i class="fas fa-map-marker-alt"></i>
-                                {% elif field.name == 'arrival_point' %}<i class="fas fa-map-pin"></i>
-                                {% elif field.name == 'seats_count' %}<i class="fas fa-users"></i>
-                                {% elif field.name == 'contact_phone' %}<i class="fas fa-phone"></i>
-                                {% else %}<i class="fas fa-edit"></i>
-                                {% endif %}
-                            </span>
-
-                            {# Додаємо клас glass-input через фільтр або віджети у forms.py #}
-                            {{ field }}
+                            <span class="input-group-text bg-transparent border-0 text-warning"><i class="fas fa-map-marker-alt"></i></span>
+                            <input type="text" name="start_city" class="form-control glass-input" placeholder="Місто відправлення" list="cities-list" value="{{ request.GET.start_city|default:'' }}">
                         </div>
-
-                        {% if field.errors %}
-                            <div class="text-warning small mt-1 animate-fade-in">
-                                <i class="fas fa-exclamation-triangle me-1"></i>{{ field.errors|striptags }}
-                            </div>
-                        {% endif %}
                     </div>
-                    {% endfor %}
 
-                    <div class="mt-4">
-                        <button type="submit" class="btn glass-btn-registration w-100 py-3 fw-bold">
-                            <i class="fas fa-check-circle me-2"></i>ПІДТВЕРДИТИ БРОНЮВАННЯ
+                    <div class="col-md-4">
+                        <label class="form-label small text-white-50">Куди</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-transparent border-0 text-warning"><i class="fas fa-route"></i></span>
+                            <input type="text" name="end_city" class="form-control glass-input" placeholder="Місто прибуття" list="cities-list" value="{{ request.GET.end_city|default:'' }}">
+                        </div>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label small text-white-50">Дата</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-transparent border-0 text-warning"><i class="fas fa-calendar-alt"></i></span>
+                            <input type="date" name="date" class="form-control glass-input" value="{{ request.GET.date|default:'' }}">
+                        </div>
+                    </div>
+
+                    <div class="col-md-1 d-flex align-items-end">
+                        <button type="submit" class="btn glass-btn-registration w-100">
+                            <i class="fas fa-search"></i>
                         </button>
-                        <a href="{% url 'booking_route_list' %}" class="btn btn-link w-100 text-white-50 mt-2 text-decoration-none small">
-                            <i class="fas fa-arrow-left me-1"></i> Скасувати та повернутися
-                        </a>
                     </div>
                 </form>
             </div>
-
-            <div class="mt-4 p-3 text-center text-white-50 small glass-card border-0" style="background: rgba(255, 193, 7, 0.05);">
-                <i class="fas fa-info-circle text-warning me-2"></i>
-                Будь ласка, перевірте правильність введених даних перед підтвердженням.
-            </div>
         </div>
+    </div>
+
+    <datalist id="cities-list">
+        {% for city in available_cities %}
+            <option value="{{ city }}">
+        {% endfor %}
+    </datalist>
+
+    <div class="row">
+        {% if not request.GET.start_city or not request.GET.end_city %}
+            <div class="col-12 text-center py-5">
+                <div class="glass-card d-inline-block p-5">
+                    <i class="fas fa-bus-alt fa-3x text-primary mb-3 opacity-50"></i>
+                    <h3 class="text-white">Почніть пошук</h3>
+                    <p class="text-white-50">Вкажіть міста відправлення та прибуття, щоб побачити доступні маршрути.</p>
+                </div>
+            </div>
+        {% else %}
+            {% for route in routes %}
+                <div class="col-12 mb-4">
+                    {% include 'booking/_route_card.html' %}
+                </div>
+            {% empty %}
+                <div class="col-12 text-center py-5">
+                    <div class="glass-card d-inline-block p-5" style="border: 1px dashed rgba(255,255,255,0.1);">
+                        <i class="fas fa-search-location fa-3x text-warning mb-3"></i>
+                        <h3 class="text-white">Маршрутів не знайдено</h3>
+                        <p class="text-white-50">На жаль, ми не знайшли рейсів між містами <strong>{{ request.GET.start_city }}</strong> та <strong>{{ request.GET.end_city }}</strong>.</p>
+                        <a href="{% url 'booking_route_list' %}" class="btn btn-outline-warning mt-3">Скинути пошук</a>
+                    </div>
+                </div>
+            {% endfor %}
+        {% endif %}
     </div>
 </div>
 

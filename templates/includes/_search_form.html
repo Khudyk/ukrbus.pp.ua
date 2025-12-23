@@ -1,39 +1,133 @@
-<div class="glass-card mt-n5 shadow-lg">
-    <form action="{% url 'booking_route_list' %}" method="GET" class="row g-3">
-        <div class="col-md-4">
-            <label class="form-label small text-white-50">Звідки</label>
-            <div class="input-group">
-                <span class="input-group-text bg-transparent border-0 text-warning"><i class="fas fa-map-marker-alt"></i></span>
-                <input type="text" name="start_city" class="form-control" placeholder="Місто відправлення" list="cities-list" value="{{ request.GET.start_city }}">
-            </div>
-        </div>
+<div class="row justify-content-center mb-5">
+    <div class="col-lg-10">
+        <div class="glass-card mt-n5 shadow-lg p-4">
+            <form action="{% url 'booking_route_list' %}" method="GET" class="row g-3" autocomplete="off">
+                <div class="col-md-4 position-relative">
+                    <label class="form-label small text-white-50">Звідки</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent border-0 text-warning"><i class="fas fa-map-marker-alt"></i></span>
+                        <input type="text" id="start_city_input" name="start_city" class="form-control glass-input"
+                               placeholder="Місто відправлення" value="{{ request.GET.start_city|default:'' }}" required>
+                    </div>
+                    <div id="start_city_results" class="autocomplete-suggestions glass-dropdown d-none"></div>
+                </div>
 
-        <div class="col-md-4">
-            <label class="form-label small text-white-50">Куди</label>
-            <div class="input-group">
-                <span class="input-group-text bg-transparent border-0 text-warning"><i class="fas fa-route"></i></span>
-                <input type="text" name="end_city" class="form-control" placeholder="Місто прибуття" list="cities-list" value="{{ request.GET.end_city }}">
-            </div>
-        </div>
+                <div class="col-md-4 position-relative">
+                    <label class="form-label small text-white-50">Куди</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent border-0 text-warning"><i class="fas fa-route"></i></span>
+                        <input type="text" id="end_city_input" name="end_city" class="form-control glass-input"
+                               placeholder="Місто прибуття" value="{{ request.GET.end_city|default:'' }}" required>
+                    </div>
+                    <div id="end_city_results" class="autocomplete-suggestions glass-dropdown d-none"></div>
+                </div>
 
-        <div class="col-md-3">
-            <label class="form-label small text-white-50">Дата</label>
-            <div class="input-group">
-                <span class="input-group-text bg-transparent border-0 text-warning"><i class="fas fa-calendar-alt"></i></span>
-                <input type="date" name="date" class="form-control" value="{{ request.GET.date }}">
-            </div>
+                <div class="col-md-3">
+                    <label class="form-label small text-white-50">Дата</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent border-0 text-warning"><i class="fas fa-calendar-alt"></i></span>
+                        <input type="date" name="date" class="form-control glass-input" value="{{ request.GET.date|default:'' }}">
+                    </div>
+                </div>
+                <div class="col-md-1 d-flex align-items-end">
+                    <button type="submit" class="btn glass-btn-registration w-100"><i class="fas fa-search"></i></button>
+                </div>
+            </form>
         </div>
-
-        <div class="col-md-1 d-flex align-items-end">
-            <button type="submit" class="btn glass-btn-registration w-100">
-                <i class="fas fa-search"></i>
-            </button>
-        </div>
-    </form>
+    </div>
 </div>
 
-<datalist id="cities-list">
-    {% for city in available_cities %}
-        <option value="{{ city }}">
-    {% endfor %}
-</datalist>
+<style>
+/* Стилі для випадаючого списку */
+.autocomplete-suggestions {
+    position: absolute;
+    /* Розміщуємо точно під інпутом */
+    top: 100%;
+    left: 0;
+    right: 0;
+    /* Встановлюємо високий z-index, щоб бути над усім */
+    z-index: 9999 !important;
+
+    max-height: 250px;
+    overflow-y: auto;
+    background: rgba(30, 30, 30, 0.98); /* Робимо темнішим для читабельності */
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    margin-top: 5px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+}
+
+/* Елемент списку */
+.suggestion-item {
+    padding: 12px 15px;
+    cursor: pointer;
+    color: white;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.suggestion-item:hover {
+    background: rgba(13, 110, 253, 0.4); /* Блакитний колір підсвітки як у вашої рамки */
+}
+
+/* ВАЖЛИВО: щоб список не обрізався */
+.glass-card {
+    overflow: visible !important; /* Дозволяємо вихід елементів за межі */
+}
+
+.position-relative {
+    position: relative !important;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Список міст з Django контексту
+    const cities = [{% for city in available_cities %}"{{ city }}"{% if not forloop.last %}, {% endif %}{% endfor %}];
+
+    function setupAutocomplete(inputId, resultsId) {
+        const input = document.getElementById(inputId);
+        const results = document.getElementById(resultsId);
+
+        input.addEventListener('input', function() {
+            const val = this.value.toLowerCase();
+            results.innerHTML = '';
+
+            if (!val) {
+                results.classList.add('d-none');
+                return;
+            }
+
+            const filtered = cities.filter(city => city.toLowerCase().includes(val));
+
+            if (filtered.length > 0) {
+                filtered.forEach(city => {
+                    const div = document.createElement('div');
+                    div.classList.add('suggestion-item');
+                    div.textContent = city;
+                    div.addEventListener('click', function() {
+                        input.value = city;
+                        results.classList.add('d-none');
+                    });
+                    results.appendChild(div);
+                });
+                results.classList.remove('d-none');
+            } else {
+                results.classList.add('d-none');
+            }
+        });
+
+        // Закриття списку при кліку поза ним
+        document.addEventListener('click', function(e) {
+            if (e.target !== input) results.classList.add('d-none');
+        });
+    }
+
+    setupAutocomplete('start_city_input', 'start_city_results');
+    setupAutocomplete('end_city_input', 'end_city_results');
+});
+</script>

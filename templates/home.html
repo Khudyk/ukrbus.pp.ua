@@ -3,14 +3,14 @@
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-lg-11">
-        <div class="glass-card shadow-lg animate-fade-in p-5 mb-5 text-center border-0 position-relative overflow-hidden">
+        <div class="glass-card shadow-lg animate-fade-in p-5 mb-5 text-center border-0 position-relative" style="overflow: visible !important;">
 
             <div class="position-relative z-index-1 py-4">
                 <h1 class="display-3 fw-bold text-white mb-3">
                     Подорожуйте <span class="text-primary">комфортно</span>
                 </h1>
                 <p class="col-md-8 mx-auto fs-4 text-white-50 mb-5">
-                   Швидкий пошук рейсів по всій Україні та країнах ЄС. Зручне управління для міжнародних перевізників.
+                   Швидкий пошук рейсів по всій Україні та країнах ЄС.
                 </p>
 
                 {% if not user.is_authenticated %}
@@ -18,66 +18,15 @@
                         <a href="{% url 'passenger_signup' %}" class="btn btn-light btn-lg px-5 py-3 fw-bold shadow-lg" style="border-radius: 12px;">
                             <i class="fas fa-ticket-alt me-2 text-primary"></i>ЗАБРОНЮВАТИ КВИТОК
                         </a>
-                        <a href="{% url 'carrier_signup' %}" class="btn btn-outline-light btn-lg px-5 py-3 fw-bold" style="border-radius: 12px; border-width: 2px;">
-                            <i class="fas fa-bus me-2"></i>СТАТИ ПАРТНЕРОМ
-                        </a>
                     </div>
-
                 {% endif %}
 
-                <div class="glass-card p-2 rounded-pill shadow-lg mx-auto col-xl-10 border-0" style="background: rgba(255,255,255,0.1);">
-                    <form action="{% url 'booking_route_list' %}" method="GET" class="row g-2 align-items-center m-0">
-                        <div class="col-md-4">
-                            <div class="input-group">
-                                <span class="input-group-text bg-transparent border-0 text-primary"><i class="fas fa-map-marker-alt"></i></span>
-                                <input type="text" name="start_city" class="form-control bg-transparent border-0 text-white shadow-none" placeholder="Звідки?">
-                            </div>
-                        </div>
-                        <div class="col-md-4 border-start border-light border-opacity-10">
-                            <div class="input-group">
-                                <span class="input-group-text bg-transparent border-0 text-primary"><i class="fas fa-location-arrow"></i></span>
-                                <input type="text" name="end_city" class="form-control bg-transparent border-0 text-white shadow-none" placeholder="Куди?">
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <button type="submit" class="btn glass-btn-registration w-100 rounded-pill py-3 fw-bold">
-                                <i class="fas fa-search me-2"></i>ЗНАЙТИ РЕЙСИ
-                            </button>
-                        </div>
-                    </form>
-                </div>
+                {% include 'includes/_search_form.html' %}
             </div>
         </div>
 
         <div class="row g-4 text-center mt-2">
-            <div class="col-md-4">
-                <div class="glass-card h-100 p-4 border-0 shadow-sm transition-hover">
-                    <div class="glass-icon mx-auto mb-4" style="width: 80px; height: 80px; background: rgba(13, 110, 253, 0.1);">
-                        <i class="fa-solid fa-shield-halved fa-2x text-primary"></i>
-                    </div>
-                    <h4 class="text-white fw-bold">Надійність</h4>
-                    <p class="text-white-50">Тільки перевірені перевізники та безпечна система бронювання.</p>
-                </div>
             </div>
-            <div class="col-md-4">
-                <div class="glass-card h-100 p-4 border-0 shadow-sm transition-hover">
-                    <div class="glass-icon mx-auto mb-4" style="width: 80px; height: 80px; background: rgba(0, 212, 255, 0.1);">
-                        <i class="fa-solid fa-bolt fa-2x text-info"></i>
-                    </div>
-                    <h4 class="text-white fw-bold">Швидкість</h4>
-                    <p class="text-white-50">Бронювання місця за лічені секунди. Миттєве підтвердження.</p>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="glass-card h-100 p-4 border-0 shadow-sm transition-hover">
-                    <div class="glass-icon mx-auto mb-4" style="width: 80px; height: 80px; background: rgba(32, 201, 151, 0.1);">
-                        <i class="fa-solid fa-headset fa-2x text-success"></i>
-                    </div>
-                    <h4 class="text-white fw-bold">Підтримка</h4>
-                    <p class="text-white-50">Цілодобова допомога нашим клієнтам та партнерам у будь-яких питаннях.</p>
-                </div>
-            </div>
-        </div>
     </div>
 </div>
 {% endblock %}

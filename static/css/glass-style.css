@@ -47,21 +47,55 @@ main { flex: 1; }
     box-shadow: var(--card-shadow);
     padding: 1.5rem;
     transition: var(--transition);
-    overflow: hidden;
     position: relative;
+    /* overflow: visible дозволяє випадаючим спискам не обрізатися */
+    overflow: visible !important;
 }
 
 .glass-card:hover {
     border-color: var(--glass-input-border);
-    transform: translateY(-8px);
+    transform: translateY(-4px);
     background: var(--glass-bg-hover);
     box-shadow: 0 15px 45px rgba(0, 0, 0, 0.6);
 }
 
 /* =========================================
-   3. СПЕЦІАЛЬНІ СТИЛІ ДЛЯ TOP-МАРШРУТІВ
+   3. ГУРТОВІ ТА ГРИЗОНТАЛЬНІ МАРШРУТИ
    ========================================= */
-/* Сяйво та рамка для преміум-карток */
+
+/* Контейнер для результатів (розширена версія) */
+.results-container {
+    max-width: 1200px !important;
+    margin: 0 auto;
+}
+
+/* Примусове розтягування картки */
+.route-horizontal-wrapper {
+    width: 100% !important;
+    display: block;
+    clear: both;
+}
+
+/* Стиль таймлайну (лінія між містами) */
+.route-line {
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent-color), transparent);
+    width: 100%;
+    position: relative;
+    opacity: 0.5;
+}
+
+.route-line i {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #111827; /* Колір для перекриття лінії навколо іконки */
+    padding: 0 10px;
+    font-size: 0.85rem;
+}
+
+/* Спеціальні стилі для TOP-маршрутів */
 .top-boosted-card {
     border: 1px solid var(--accent-color) !important;
     box-shadow: 0 0 25px var(--accent-glow) !important;
@@ -75,51 +109,36 @@ main { flex: 1; }
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* Крапка зупинки для ТОП-маршруту */
-.stop-dot {
-    width: 8px;
-    height: 8px;
-    background: rgba(255, 255, 255, 0.3);
-    border-radius: 50%;
-}
-
-.top-boosted-card .stop-dot {
-    background: var(--accent-color);
-    box-shadow: 0 0 8px var(--accent-glow);
-}
-
 /* =========================================
-   4. ТАБЛИЦІ (ПРОФІЛЬ ТА КЕРУВАННЯ)
+   4. АВТОЗАПОВНЕННЯ (CITY SEARCH)
    ========================================= */
-.table {
-    --bs-table-bg: transparent !important;
-    --bs-table-color: white !important;
-    margin-bottom: 0;
+.autocomplete-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 9999 !important;
+    background: rgba(15, 23, 42, 0.98);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-input-border);
+    border-radius: 12px;
+    margin-top: 8px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+    max-height: 250px;
+    overflow-y: auto;
 }
 
-/* Скидання Bootstrap заливки комірок */
-.table > :not(caption) > * > * {
-    background-color: transparent !important;
-    color: white !important;
-    box-shadow: none !important;
-    border-bottom: 1px solid var(--glass-border) !important;
-    padding: 1rem 0.75rem !important;
+.suggestion-item {
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: background 0.2s;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
 }
 
-.table thead th {
-    background: rgba(255, 255, 255, 0.05) !important;
-    text-transform: uppercase;
-    font-size: 0.75rem;
-    letter-spacing: 1px;
-    font-weight: 600;
-}
-
-.transition-hover-row {
-    transition: background 0.3s ease;
-}
-
-.transition-hover-row:hover {
-    background: var(--glass-bg-hover) !important;
+.suggestion-item:last-child { border-bottom: none; }
+.suggestion-item:hover {
+    background: var(--glass-bg-hover);
+    color: var(--accent-color);
 }
 
 /* =========================================
@@ -159,90 +178,62 @@ main { flex: 1; }
 
 .glass-btn-registration:hover {
     background: var(--accent-hover) !important;
-    transform: scale(1.03);
+    transform: scale(1.02);
     box-shadow: 0 6px 25px var(--accent-glow);
 }
 
-/* Кнопка редагування в таблиці */
-.btn-glass-edit {
-    background: rgba(255, 255, 255, 0.05);
-    color: white;
-    border: 1px solid var(--glass-border);
+/* =========================================
+   6. ЕЛЕМЕНТИ ІНТЕРФЕЙСУ (АВАТАРИ, ЦІНИ)
+   ========================================= */
+.avatar-circle {
+    width: 40px; height: 40px;
+    background: linear-gradient(135deg, #0d6efd, #0dcaf0);
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-weight: bold; color: white; border: 1px solid rgba(255,255,255,0.1);
+}
+
+.price-badge-glass {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 10px 15px;
     transition: var(--transition);
 }
 
-.btn-glass-edit:hover {
-    background: var(--glass-bg-hover);
-    color: var(--accent-color);
-    border-color: var(--accent-color);
-}
-
-.drag-handle {
-    cursor: grab;
-    padding: 10px; /* Більша зона для натискання пальцем */
-    touch-action: none; /* Запобігає скролу сторінки під час перетягування */
-}
-.drag-handle:active {
-    cursor: grabbing;
-}
-.sortable-ghost {
-    opacity: 0.4;
-    background-color: rgba(13, 110, 253, 0.1);
-}
-
-
-    /* Кастомізація випадаючих списків для Glassmorphism */
-    .glass-select {
-        background-color: rgba(255, 255, 255, 0.05) !important;
-        color: white !important;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
-        appearance: none;
-        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23ffffff'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e") !important;
-        background-repeat: no-repeat !important;
-        background-position: right 0.75rem center !important;
-        background-size: 16px 12px !important;
-        padding-right: 2.5rem !important;
-    }
-
-    /* Стиль для варіантів вибору (dropdown menu) */
-    .glass-select option {
-        background-color: #1a1d21 !important; /* Темний фон замість білого */
-        color: white !important;
-    }
-
-    .avatar-circle {
-        width: 40px; height: 40px;
-        background: linear-gradient(135deg, #0d6efd, #0dcaf0);
-        border-radius: 50%; display: flex; align-items: center; justify-content: center;
-        font-weight: bold; color: white; border: 1px solid rgba(255,255,255,0.1);
-    }
-
-    /* Фікс для запобігання накладанню елементів */
-    .filter-row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 1rem;
-        align-items: flex-end;
-    }
-/* Стиль скляної плашки для ціни */
-.price-badge-glass {
-    background: rgba(255, 255, 255, 0.03); /* Дуже легкий білий фон */
-    backdrop-filter: blur(10px);           /* Ефект розмиття заднього плану */
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1); /* Тонка напівпрозора рамка */
-    border-radius: 12px;
-    transition: all 0.3s ease;             /* Плавна анімація */
-}
-
-/* Ефект при наведенні (опціонально) */
 .price-badge-glass:hover {
     background: rgba(255, 255, 255, 0.07);
-    border-color: rgba(255, 193, 7, 0.3);  /* Зміна кольору рамки на жовтуватий */
-    transform: translateY(-2px);           /* Легке підняття вгору */
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    transform: translateY(-2px);
 }
 
-/* Стилізація суми */
-.price-badge-glass span {
-    text-shadow: 0 0 10px rgba(255, 193, 7, 0.2); /* Легке світіння цифр */
+/* Анімація для списків */
+.animate-fade-in {
+    animation: fadeIn 0.5s ease-in forwards;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* =========================================
+   7. ТАБЛИЦІ (ПРОФІЛЬ ТА КЕРУВАННЯ)
+   ========================================= */
+.table {
+    --bs-table-bg: transparent !important;
+    --bs-table-color: white !important;
+}
+
+.table > :not(caption) > * > * {
+    background-color: transparent !important;
+    color: white !important;
+    border-bottom: 1px solid var(--glass-border) !important;
+    padding: 1rem 0.75rem !important;
+}
+
+.table thead th {
+    background: rgba(255, 255, 255, 0.05) !important;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    font-weight: 600;
 }

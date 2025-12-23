@@ -1,46 +1,51 @@
-import io
 import os
+from datetime import datetime
+
 from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models import (
+    Case, Exists, F, IntegerField, OuterRef,
+    Q, Subquery, Sum, Value, When
+)
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404, redirect
 from django.template.loader import get_template
+from django.urls import reverse_lazy
+from django.utils import timezone
+from django.views import View
+from django.views.generic import CreateView, ListView
+
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
-from xhtml2pdf import pisa
 
-
-from datetime import datetime
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Q, Sum, Case, When, Value, IntegerField, F, OuterRef, Subquery, Exists
-from django.http import HttpResponse
-from django.shortcuts import render, get_object_or_404, redirect
-from django.urls import reverse_lazy
-from django.views import View
-from django.views.generic import ListView, CreateView
-from django.utils import timezone
-from django.contrib import messages
-from booking.forms import BookingForm
+from booking.forms import BookingForm, MakeBookingForm
 from booking.models import Booking
-from trips.models import Route, RouteStop, City
+from booking.utils import get_cached_distance
+from trips.models import City, Route, RouteStop
 
 
-# --- СПИСОК МАРШРУТІВ (ДЛЯ ВСІХ) ---
+
+
 class BookingRouteListView(ListView):
     model = Route
     template_name = 'booking/route_list.html'
     context_object_name = 'routes'
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['available_cities'] = City.objects.values_list('name', flat=True).order_by('name')
-        return context
-
     def get_queryset(self):
-        now = timezone.now()
-        queryset = Route.objects.filter(is_active=True).select_related('carrier').prefetch_related('stops__city')
-
         start_city = self.request.GET.get('start_city')
         end_city = self.request.GET.get('end_city')
-        date_str = self.request.GET.get('date')
 
+        # 1. Якщо хоча б одне поле порожнє — повертаємо порожній результат
+        if not start_city or not end_city:
+            return Route.objects.none()
+
+        now = timezone.now()
+        # Базовий запит з оптимізацією (prefetch_related для міст)
+        queryset = Route.objects.filter(is_active=True).select_related('carrier').prefetch_related('stops__city')
+
+        # --- ЛОГІКА ДАТИ ---
+        date_str = self.request.GET.get('date')
         target_day = None
         if date_str:
             try:
@@ -49,31 +54,25 @@ class BookingRouteListView(ListView):
             except ValueError:
                 pass
 
-        if start_city and end_city:
-            start_stop_filter = {'route': OuterRef('pk'), 'city__name__icontains': start_city}
-            if target_day:
-                start_stop_filter['day_of_week'] = target_day
+        # --- ФІЛЬТРАЦІЯ ЗА МІСТАМИ ТА НАПРЯМКОМ ---
+        start_stop_filter = {'route': OuterRef('pk'), 'city__name__icontains': start_city}
+        if target_day:
+            start_stop_filter['day_of_week'] = target_day
 
-            start_stop_subquery = RouteStop.objects.filter(**start_stop_filter)
-            end_stop_subquery = RouteStop.objects.filter(route=OuterRef('pk'), city__name__icontains=end_city)
+        start_stop_subquery = RouteStop.objects.filter(**start_stop_filter)
+        end_stop_subquery = RouteStop.objects.filter(route=OuterRef('pk'), city__name__icontains=end_city)
 
-            queryset = queryset.filter(
-                Exists(start_stop_subquery),
-                Exists(end_stop_subquery)
-            ).annotate(
-                start_order=Subquery(start_stop_subquery.values('order')[:1]),
-                end_order=Subquery(end_stop_subquery.values('order')[:1])
-            ).filter(
-                start_order__lt=F('end_order')
-            )
-        elif start_city:
-            filter_params = {'stops__city__name__icontains': start_city}
-            if target_day:
-                filter_params['stops__day_of_week'] = target_day
-            queryset = queryset.filter(**filter_params)
-        elif target_day:
-            queryset = queryset.filter(stops__day_of_week=target_day)
+        queryset = queryset.filter(
+            Exists(start_stop_subquery),
+            Exists(end_stop_subquery)
+        ).annotate(
+            start_order=Subquery(start_stop_subquery.values('order')[:1]),
+            end_order=Subquery(end_stop_subquery.values('order')[:1])
+        ).filter(
+            start_order__lt=F('end_order')
+        )
 
+        # --- СОРТУВАННЯ ТА TOP ---
         queryset = queryset.annotate(
             is_active_top=Case(
                 When(Q(top_until__isnull=False) & Q(top_until__gt=now), then=Value(1)),
@@ -82,67 +81,100 @@ class BookingRouteListView(ListView):
             )
         ).distinct().order_by('-is_active_top', '-top_until', '-id')
 
-        return queryset
+        # --- РОЗРАХУНОК ВІДСТАНІ ТА КЕШУВАННЯ ---
+        city_a = City.objects.filter(name__icontains=start_city).first()
+        city_b = City.objects.filter(name__icontains=end_city).first()
+        distance = get_cached_distance(city_a, city_b) if city_a and city_b else None
 
+        # Перетворення у список для додавання цін
+        routes_list = list(queryset)
+        for route in routes_list:
+            route.calculated_distance = distance
+            if distance and route.price_per_km:
+                price = float(distance) * float(route.price_per_km)
+                route.final_price = max(price, float(route.min_trip_price))
+            else:
+                route.final_price = route.min_trip_price
+
+        return routes_list
+
+    def get_context_data(self, **kwargs):
+        # Отримуємо базовий контекст від Django
+        context = super().get_context_data(**kwargs)
+
+        # Додаємо список усіх міст для нашого нового автозаповнення
+        # values_list('name', flat=True) витягує лише назви одним списком ['Київ', 'Львів'...]
+        context['available_cities'] = City.objects.values_list('name', flat=True).distinct().order_by('name')
+
+        # Повертаємо оновлений контекст у шаблон
+        return context
 
 # --- СТВОРЕННЯ БРОНЮВАННЯ (ДЛЯ ПАСАЖИРА) ---
 class MakeBookingView(LoginRequiredMixin, CreateView):
     model = Booking
-    form_class = BookingForm
-    template_name = 'booking/booking_form.html'
-    success_url = reverse_lazy('passenger-bookings')  # Змінено на список квитків
+    form_class = MakeBookingForm
+    template_name = 'booking/make_booking.html'
+    success_url = reverse_lazy('passenger-bookings')
 
     def get_initial(self):
         initial = super().get_initial()
-        date_from_url = self.request.GET.get('date')
-        start_city = self.request.GET.get('start_city')
-        end_city = self.request.GET.get('end_city')
-
-        if date_from_url: initial['trip_date'] = date_from_url
-        if start_city: initial['departure_point'] = start_city
-        if end_city: initial['arrival_point'] = end_city
+        route = get_object_or_404(Route, id=self.kwargs.get('route_id'))
+        initial.update({
+            'departure_point': self.request.GET.get('start_city'),
+            'arrival_point': self.request.GET.get('end_city'),
+            'trip_date': self.request.GET.get('date'),
+            'route_obj': route,  # Передаємо сам об'єкт для валідації
+        })
         return initial
 
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['route'] = get_object_or_404(Route, id=self.kwargs.get('route_id'))
-        return kwargs
+    def get_calculated_data(self):
+        route = get_object_or_404(Route, id=self.kwargs.get('route_id'))
+        # Беремо дані або з GET (при завантаженні), або з POST (при збереженні)
+        start_city_name = self.request.GET.get('start_city') or self.request.POST.get('departure_point')
+        end_city_name = self.request.GET.get('end_city') or self.request.POST.get('arrival_point')
+
+        city_a = City.objects.filter(name__icontains=start_city_name).first()
+        city_b = City.objects.filter(name__icontains=end_city_name).first()
+
+        distance = get_cached_distance(city_a, city_b) if city_a and city_b else None
+        final_price_per_ticket = float(route.min_trip_price)
+
+        if distance and route.price_per_km:
+            calculated_price = float(distance) * float(route.price_per_km)
+            final_price_per_ticket = max(calculated_price, float(route.min_trip_price))
+
+        return {
+            'route': route,
+            'distance': distance,
+            'final_price': final_price_per_ticket
+        }
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['route'] = get_object_or_404(Route, id=self.kwargs.get('route_id'))
+        context.update(self.get_calculated_data())
         return context
 
     def form_valid(self, form):
-        route = get_object_or_404(Route, id=self.kwargs.get('route_id'))
-        departure_city_name = form.cleaned_data.get('departure_point')
-        arrival_city_name = form.cleaned_data.get('arrival_point')
-        trip_date = form.cleaned_data.get('trip_date')
+        data = self.get_calculated_data()
 
-        # 1. Отримуємо зупинки для цього маршруту
-        try:
-            dep_stop = route.stops.get(city__name__icontains=departure_city_name)
-            arr_stop = route.stops.get(city__name__icontains=arrival_city_name)
+        # Використовуємо commit=False для безпечного наповнення об'єкта
+        booking = form.save(commit=False)
+        booking.passenger = self.request.user
+        booking.route = data['route']
 
-            # 2. ПЕРЕВІРКА: чи не йде висадка раніше посадки
-            if dep_stop.order >= arr_stop.order:
-                form.add_error('arrival_point', "Помилка: зупинка висадки повинна бути після зупинки посадки.")
-                return self.form_invalid(form)
+        # Розраховуємо фінальну суму
+        seats = form.cleaned_data.get('seats_count', 1)
+        booking.total_price = data['final_price'] * seats
 
-        except RouteStop.DoesNotExist:
-            form.add_error('departure_point', "Вибрані міста не знайдені в цьому маршруті.")
-            return self.form_invalid(form)
+        booking.save()
 
-        # 3. Перевірка дати (як була раніше)
-        if trip_date < timezone.now().date():
-            form.add_error('trip_date', "Дата виїзду не може бути в минулому.")
-            return self.form_invalid(form)
-
-        # Збереження
-        form.instance.passenger = self.request.user
-        form.instance.route = route
-        messages.success(self.request, "Бронювання успішно створено!")
+        messages.success(self.request, f"Бронювання на суму ₴{booking.total_price} успішно створено!")
         return super().form_valid(form)
+
+    def form_invalid(self, form):
+        """Якщо не зберігає — виведе помилку в консоль"""
+        print("DEBUG: Помилки валідації:", form.errors)
+        return super().form_invalid(form)
 
 
 # --- ПАНЕЛЬ КЕРУВАННЯ ПЕРЕВІЗНИКА ---
@@ -338,13 +370,5 @@ class ExportPassengerPDFView(LoginRequiredMixin, View):
         }
 
         template = get_template('booking/passenger_manifest_pdf.html')
-        html = template.render(context)
 
-        result = io.BytesIO()
-        # Створюємо PDF
-        pdf = pisa.pisaDocument(
-            io.BytesIO(html.encode("UTF-8")),
-            result,
-            encoding='UTF-8'
-        )
-        # ... (решта коду з HttpResponse)
+

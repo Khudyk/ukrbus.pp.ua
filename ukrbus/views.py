@@ -1,3 +1,13 @@
-from django.shortcuts import render
+# views.py
+from django.views.generic import TemplateView
+from city.models import City
 
-# Create your views here.
+
+class HomeView(TemplateView):
+    template_name = 'home.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Додаємо список міст, щоб JavaScript у формі міг їх побачити
+        context['available_cities'] = City.objects.values_list('name', flat=True).distinct().order_by('name')
+        return context

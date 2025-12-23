@@ -1,6 +1,6 @@
 # booking/urls.py
 from django.urls import path
-
+from . import utils
 from .views import (
     BookingRouteListView,
     MakeBookingView,
@@ -20,5 +20,8 @@ urlpatterns = [
 
     # Новий шлях для відомості (маніфесту)
     path('manifest/', PassengerManifestView.as_view(), name='passenger_manifest'),
+
+    path('api/get-route-data/',utils.get_osm_road_distance, name='get_route_data'),
+
 
 ]

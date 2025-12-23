@@ -8,19 +8,21 @@
         </div>
     </div>
 
-    <h3 class="text-white mb-4">Доступні маршрути</h3>
+<h3 class="text-white mb-2">Доступні маршрути</h3>
+{% if calculated_distance %}
+    <p class="text-white-50 mb-4">
+        <i class="bi bi-geo-alt"></i> Відстань між містами: <strong>{{ calculated_distance }} км</strong>
+    </p>
+{% endif %}
 
-    <div class="row g-4">
-        {% for route in routes %}
-            <div class="col-md-6 col-lg-4">
-                {% include 'booking/_route_card.html' %}
-            </div>
-        {% empty %}
-            <div class="col-12 text-center py-5 glass-card">
-                <p class="text-white-50">На жаль, за вашим запитом нічого не знайдено.</p>
-                <a href="{% url 'booking_route_list' %}" class="btn btn-sm glass-btn-warning">Скинути фільтри</a>
-            </div>
+<div class="row g-4">
+    {% for route in routes %}
+        <div class="">
+            {# Передаємо відстань всередину картки, якщо потрібно #}
+            {% include 'booking/_route_card.html' with road_distance=calculated_distance %}
+        </div>
+    {% empty %}
         {% endfor %}
-    </div>
+</div>
 </div>
 {% endblock %}

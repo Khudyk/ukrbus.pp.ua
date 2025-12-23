@@ -1,106 +1,76 @@
-<div class="glass-card h-100 shadow-sm animate-fade-in border-0 position-relative d-flex flex-column {% if route.is_boosted %}top-boosted-card{% endif %}">
+<div class="glass-card w-100 mb-4 shadow-sm border-0 position-relative {% if route.is_boosted %}top-boosted-card{% endif %} route-horizontal-wrapper">
 
     {% if route.is_boosted %}
-    <div class="position-absolute top-0 end-0 m-3" style="z-index: 10;">
-        <span class="badge rounded-pill bg-primary shadow-glow px-3 py-2 border border-primary-subtle">
-            <i class="fas fa-crown text-warning me-1"></i> TOP до {{ route.top_until|date:"d.m" }}
+    <div class="position-absolute top-0 end-0 m-3" style="z-index: 5;">
+        <span class="badge rounded-pill bg-primary shadow-glow px-3 py-2">
+            <i class="fas fa-crown text-warning me-1"></i> TOP
         </span>
     </div>
     {% endif %}
 
-    <div class="p-4 flex-grow-1">
-        <div class="mb-3">
-            <div class="d-flex align-items-center flex-wrap gap-2 pe-5">
-                {% for stop in route.stops.all|dictsort:"order" %}
-                    <span class="text-white fw-bold h5 mb-0">{{ stop.city.name }}</span>
-                    {% if not forloop.last %}
-                        <i class="fas fa-long-arrow-alt-right text-primary mx-1 small"></i>
+    <div class="row g-0 align-items-stretch">
+        <div class="col-lg-8 p-4 d-flex flex-column justify-content-center">
+            <div class="d-flex justify-content-between align-items-center text-center px-md-4">
+
+                <div class="departure text-start">
+                    <div class="h1 text-white fw-bold mb-0"> {% with s=route.stops.all|dictsort:"order"|first %}{{ s.departure_time|time:"H:i" }}{% endwith %}
+                    </div>
+                    <div class="text-white h5 mb-1 fw-bold text-uppercase">
+                        {{ request.GET.start_city|default:route.stops.all.0.city.name }}
+                    </div>
+                    <div class="text-white-50 small">
+                        <i class="far fa-calendar-alt me-1"></i> {% if request.GET.date %}{{ request.GET.date }}{% else %}Сьогодні{% endif %}
+                    </div>
+                </div>
+
+                <div class="mx-4 flex-grow-1 position-relative">
+                    <div class="route-line" style="opacity: 0.6; height: 3px;">
+                        <i class="fas fa-bus text-primary bg-dark px-3" style="font-size: 1.2rem; transform: translate(-50%, -50%);"></i>
+                    </div>
+                    {% if route.calculated_distance %}
+                        <div class="text-primary-subtle mt-3 fw-bold font-monospace" style="letter-spacing: 1px;">
+                            {{ route.calculated_distance }} км
+                        </div>
                     {% endif %}
-                {% endfor %}
-            </div>
-
-            <div class="mt-2 d-flex align-items-center">
-                <div class="badge bg-primary bg-opacity-25 text-info border border-info-subtle small fw-normal">
-                    <i class="fas fa-bus-alt me-1"></i>
-                    <span class="ms-1 fw-bold">
-                        {% if route.carrier.carrier_profile.company_name %}
-                            {{ route.carrier.carrier_profile.company_name }}
-                        {% else %}
-                            {{ route.carrier.get_full_name|default:route.carrier.username }}
-                        {% endif %}
-                    </span>
                 </div>
-            </div>
-        </div>
 
-        <hr class="border-light opacity-10 my-3">
-
-        <div class="route-details mb-4">
-            {% for stop in route.stops.all|dictsort:"order" %}
-                <div class="stop-item d-flex justify-content-between align-items-start mb-3">
-                    <div class="d-flex align-items-center">
-                        <div class="stop-dot {% if route.is_boosted %}bg-primary{% endif %}"></div>
-                        <div class="ms-3">
-                            <div class="text-white small fw-bold">{{ stop.city.name }}</div>
-                            <div class="text-white-50" style="font-size: 0.75rem;">
-                                <i class="far fa-calendar-alt me-1" style="font-size: 0.7rem;"></i>
-                                {{ stop.get_day_of_week_display }}
-                            </div>
-                        </div>
+                <div class="arrival text-end">
+                    <div class="h1 text-white fw-bold mb-0"> {% with s=route.stops.all|dictsort:"order"|last %}{{ s.departure_time|time:"H:i" }}{% endwith %}
                     </div>
-                    <div class="text-end">
-                        <div class="badge bg-dark text-primary border border-primary-subtle py-2 px-2 shadow-sm">
-                            <i class="far fa-clock me-1"></i>{{ stop.departure_time|time:"H:i" }}
-                        </div>
+                    <div class="text-white h5 mb-1 fw-bold text-uppercase">
+                        {{ request.GET.end_city|default:route.stops.all.last.city.name }}
                     </div>
-                </div>
-            {% endfor %}
-        </div>
-    </div>
-
-    <div class="p-4 pt-0">
-
-        {% if route.is_passenger %}
-        <div class="d-flex justify-content-between align-items-center mb-2 px-1">
-            <span class="text-white-50 small font-monospace">
-                <i class="fas fa-user-friends text-primary me-2"></i>ПАСАЖИР
-            </span>
-            <div class="text-end">
-                <div class="text-white fw-bold mb-0">
-                    <span class="small fw-normal opacity-50">від</span> ₴{{ route.min_trip_price|floatformat:0 }}
-                </div>
-                <div class="text-primary-subtle" style="font-size: 0.7rem;">
-                    ₴{{ route.price_per_km }}/км
+                    <div class="text-white-50 small">Прибуття</div>
                 </div>
             </div>
-        </div>
-        {% endif %}
 
-        {% if route.is_parcel %}
-        <div class="d-flex justify-content-between align-items-center mb-3 px-1 {% if route.is_passenger %}mt-3 border-top border-light border-opacity-10 pt-2{% endif %}">
-            <span class="text-white-50 small font-monospace">
-                <i class="fas fa-box text-warning me-2"></i>ПОСИЛКА
-            </span>
-            <div class="text-end">
-                <div class="text-white-50 fw-bold mb-0">
-                    <span class="small fw-normal">від</span> ₴{{ route.min_parcel_price|floatformat:0 }}
-                </div>
-                <div class="text-warning" style="font-size: 0.7rem; opacity: 0.8;">
-                    ₴{{ route.price_per_kg }}/кг
-                </div>
+            <div class="mt-4 d-flex gap-3 px-md-4">
+                <span class="badge bg-primary bg-opacity-10 text-info border border-info-subtle px-3 py-2">
+                    <i class="fas fa-bus-alt me-2"></i>
+                    {% if route.carrier.carrier_profile.company_name %}{{ route.carrier.carrier_profile.company_name }}{% else %}{{ route.carrier.username }}{% endif %}
+                </span>
+
             </div>
         </div>
-        {% endif %}
 
-        {% if not user.is_carrier %}
-            <a href="{% url 'make_booking' route.id %}?{% if request.GET.date %}date={{ request.GET.date }}&{% endif %}{% if request.GET.start_city %}start_city={{ request.GET.start_city }}&{% endif %}{% if request.GET.end_city %}end_city={{ request.GET.end_city }}{% endif %}"
-               class="btn glass-btn-registration w-100 py-3 fw-bold text-uppercase mt-2">
-                <i class="fas fa-ticket-alt me-2"></i>Забронювати
-            </a>
-        {% else %}
-            <button class="btn btn-outline-secondary w-100 py-3 disabled opacity-50 mt-2" style="border-radius: 12px;">
-                Вхід для пасажирів
-            </button>
-        {% endif %}
+        <div class="col-lg-4 p-4 bg-opacity-20 d-flex flex-column justify-content-center align-items-center text-center border-start border-light border-opacity-10">
+            <div class="price-container mb-4">
+                <span class="text-white-50 small d-block mb-1">Вартість одного пасажира:</span>
+                <div class="display-5 text-white fw-bold mb-0"> ₴{% if route.calculated_distance %}{{ route.final_price|floatformat:0 }}{% else %}{{ route.min_trip_price|floatformat:0 }}{% endif %}
+                </div>
+
+            </div>
+
+            {% if not user.is_carrier %}
+<a href="{% url 'make_booking' route_id=route.id %}?date={{ request.GET.date }}&start_city={{ request.GET.start_city }}&end_city={{ request.GET.end_city }}&price={{ route.final_price|floatformat:0 }}"
+   class="btn glass-btn-registration w-100 py-3 fs-5 shadow-glow">
+    <i class="fas fa-ticket-alt me-2"></i> ЗАБРОНЮВАТИ
+</a>
+            {% else %}
+                <button class="btn btn-outline-secondary w-100 py-3 disabled opacity-50 border-secondary text-white">
+                    Кабінет перевізника
+                </button>
+            {% endif %}
+        </div>
     </div>
 </div>
