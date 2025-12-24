@@ -4,7 +4,11 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-q&17oamv-====%s^^%6dsyusf@q&aegim+sveers#^2n64feq&'
 DEBUG = True
-ALLOWED_HOSTS = []
+CSRF_TRUSTED_ORIGINS = [
+    'https://ukrbus.pp.ua',
+    'https://*.ngrok-free.app',  # Дозволяє будь-яку адресу від ngrok
+]
+ALLOWED_HOSTS = ['*']
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',

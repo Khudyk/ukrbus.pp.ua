@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-
+from accounts.utils import send_carrier_notification
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -157,16 +157,44 @@ class MakeBookingView(LoginRequiredMixin, CreateView):
     def form_valid(self, form):
         data = self.get_calculated_data()
 
-        # Використовуємо commit=False для безпечного наповнення об'єкта
         booking = form.save(commit=False)
         booking.passenger = self.request.user
         booking.route = data['route']
-
-        # Розраховуємо фінальну суму
         seats = form.cleaned_data.get('seats_count', 1)
         booking.total_price = data['final_price'] * seats
-
         booking.save()
+
+        # --- ЛОГІКА TELEGRAM СПОВІЩЕННЯ ---
+        try:
+            carrier_prof = booking.route.carrier.carrier_profile
+
+            # 1. Отримуємо телефон безпосередньо з профілю пасажира
+            try:
+                p_phone = booking.passenger.passenger_profile.phone
+            except Exception:
+                # Якщо профілю немає або сталася помилка, пробуємо взяти з форми
+                p_phone = form.cleaned_data.get('passenger_phone') or "не вказано"
+
+            # 2. Формуємо повне ім'я (ім'я + прізвище)
+            full_name = f"{booking.passenger.first_name} {booking.passenger.last_name}".strip()
+            if not full_name:
+                full_name = booking.passenger.username
+
+            text = (
+                f"🆕 <b>Нове замовлення №{booking.id}</b>\n\n"
+                f"🚌 <b>Рейс:</b> {booking.route.title}\n"
+                f"📍 <b>Маршрут:</b> {booking.departure_point} — {booking.arrival_point}\n"
+                f"📅 <b>Дата:</b> {booking.trip_date}\n"
+                f"👥 <b>Місць:</b> {booking.seats_count}\n"
+                f"💰 <b>Сума:</b> {booking.total_price} грн\n\n"
+                f"👤 <b>Пасажир:</b> {full_name}\n"
+                f"📞 <b>Телефон:</b> <code>{p_phone}</code>\n"  # Використовуємо <code> для копіювання одним кліком
+                f"────────────────────\n"
+            )
+
+            send_carrier_notification(carrier_prof, text)
+        except Exception as e:
+            print(f"Помилка відправки сповіщення: {e}")
 
         messages.success(self.request, f"Бронювання на суму ₴{booking.total_price} успішно створено!")
         return super().form_valid(form)
@@ -372,3 +400,20 @@ class ExportPassengerPDFView(LoginRequiredMixin, View):
         template = get_template('booking/passenger_manifest_pdf.html')
 
 
+
+
+
+def confirm_booking(request, booking_id):
+    booking = get_object_or_404(Booking, id=booking_id)
+    # ... логіка збереження ...
+
+    # Сповіщаємо перевізника
+    carrier_prof = booking.route.carrier.carrier_profile
+    text = (
+        f"🆕 <b>Нове замовлення!</b>\n"
+        f" Маршрут: {booking.route.title}\n"
+        f"👤 Пасажир: {booking.passenger_name}\n"
+        f"📞 Тел: {booking.passenger_phone}\n"
+        f"💰 Баланс: {carrier_prof.balance} грн"
+    )
+    send_carrier_notification(carrier_prof, text)

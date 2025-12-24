@@ -40,38 +40,9 @@
                     <p>Місто {{ city.name }} — важливий транспортний вузол. Скористайтеся пошуком, щоб знайти найкращі квитки.</p>
                 {% endif %}
             </div>
-
-
         </div>
     </div>
 
-   <div class="mt-5">
-    <h2 class="text-white fw-bold mb-4">
-        <i class="fas fa-map-marker-alt text-success me-3"></i>Рейси, що прибувають у м. {{ city.name }}
-    </h2>
-
-    <div class="row g-4">
-        {% for route in routes_to %}
-        <div class="col-md-6 col-lg-4">
-            <div class="glass-card p-4 transition-hover border-0 h-100 d-flex flex-column border-start border-success border-4">
-                <div class="mb-3">
-                    <div class="small text-white-50">Звідки:</div>
-                    <h5 class="text-white fw-bold">З м. {{ route.start_city.name }}</h5>
-                </div>
-                <div class="mt-auto">
-                    <a href="{% url 'booking_route_detail' route.id %}" class="btn btn-outline-success w-100 rounded-pill py-2 fw-bold">
-                        ПЕРЕГЛЯНУТИ
-                    </a>
-                </div>
-            </div>
-        </div>
-        {% empty %}
-        <div class="col-12">
-            <p class="text-white-50">Рейсів, що прибувають у це місто, поки не знайдено.</p>
-        </div>
-        {% endfor %}
-    </div>
-</div>
 </div>
 
 
