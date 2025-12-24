@@ -67,55 +67,21 @@ from datetime import date  # Імпортуємо тільки date для по�
 from .models import Booking
 
 
+from django import forms
+
 class MakeBookingForm(forms.ModelForm):
-    # Явно перевизначаємо поля як CharField, щоб вони приймали текст міст
-    departure_point = forms.CharField(widget=forms.HiddenInput())
-    arrival_point = forms.CharField(widget=forms.HiddenInput())
-
-    # Використовуємо системний віджет дати
-    trip_date = forms.DateField(
-        widget=forms.DateInput(attrs={
-            'type': 'date',
-            'class': 'form-control bg-transparent border-0 text-white'
-        }),
-        label="Дата поїздки"
-    )
-
     class Meta:
         model = Booking
         fields = ['trip_date', 'seats_count', 'departure_point', 'arrival_point']
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Стилізація поля кількості місць
-        self.fields['seats_count'].widget.attrs.update({
-            'class': 'form-control glass-input',
-            'min': '1'
-        })
-
-    def clean(self):
-        cleaned_data = super().clean()
-        trip_date = cleaned_data.get('trip_date')
-        route = self.initial.get('route_obj')
-
-        if trip_date and route:
-            # 1. Перевірка на минулу дату
-            if trip_date < date.today():
-                raise forms.ValidationError("Не можна забронювати рейс на минулу дату.")
-
-            # 2. Перевірка розкладу через RouteStop
-            # Python: Mon=0, Sun=6. Ваша модель: Mon=1, Sun=7.
-            target_day = trip_date.weekday() + 1
-
-            # Шукаємо, чи є хоча б одна зупинка на цей день для цього маршруту
-            exists = route.stops.filter(day_of_week=target_day).exists()
-
-            if not exists:
-                ua_days = {
-                    1: 'понеділок', 2: 'вівторок', 3: 'середу',
-                    4: 'четвер', 5: 'п’ятницю', 6: 'суботу', 7: 'неділю'
-                }
-                day_name = ua_days.get(target_day)
-                raise forms.ValidationError(f"На жаль, за цим маршрутом рейси на {day_name} не заплановані.")
-
-        return cleaned_data
+        widgets = {
+            'trip_date': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Оберіть дату',
+                'readonly': 'readonly' # Користувач не пише руками, а вибирає в календарі
+            }),
+            'seats_count': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': '1',
+                'max': '10'
+            }),
+        }

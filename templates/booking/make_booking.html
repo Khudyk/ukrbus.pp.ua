@@ -5,52 +5,32 @@
 <div class="container py-5">
     <div class="row justify-content-center">
         <div class="col-lg-7 col-xl-6">
-
             <div class="glass-card shadow-glow border-0 overflow-hidden">
-
-                <div class="p-4 p-md-5  bg-opacity-5 position-relative text-center">
-                    <h2 class="text-white fw-bold h4 text-uppercase mb-4" style="letter-spacing: 2px;">Оформлення бронювання</h2>
+                <div class="p-4 p-md-5 bg-opacity-5 position-relative text-center">
+                    <h2 class="text-white fw-bold h4 text-uppercase mb-4">Оформлення бронювання</h2>
 
                     <div class="d-flex align-items-center justify-content-between text-white my-5 px-3">
                         <div class="text-start" style="width: 42%;">
                             <div class="text-white-50 small text-uppercase mb-1">Відправлення</div>
-                            <div class="h3 fw-bold mb-0 text-gradient-gold">{{ request.GET.start_city }}</div>
+                            <div class="h3 fw-bold mb-0">{{ request.GET.start_city }}</div>
                         </div>
-
+                        <i class="fas fa-long-arrow-alt-right text-primary fa-2x"></i>
                         <div class="text-end" style="width: 42%;">
                             <div class="text-white-50 small text-uppercase mb-1">Прибуття</div>
-                            <div class="h3 fw-bold mb-0 text-gradient-gold">{{ request.GET.end_city }}</div>
+                            <div class="h3 fw-bold mb-0">{{ request.GET.end_city }}</div>
                         </div>
-                    </div>
-
-                    <div class="d-flex justify-content-between align-items-center mt-4 border-top border-white border-opacity-10 pt-4">
-                        <div class="text-white-50 small">
-                            <i class="fas fa-id-badge text-primary me-2"></i>{{ route.carrier.carrier_profile.company_name|default:route.carrier.username }}
-                        </div>
-
                     </div>
                 </div>
 
                 <div class="p-4 p-md-5 bg-dark bg-opacity-20">
                     <form method="post" id="bookingForm">
                         {% csrf_token %}
-
-                        {% if form.errors or form.non_field_errors %}
-                            <div class="alert alert-danger bg-danger bg-opacity-10 border-0 text-white small mb-4">
-                                <i class="fas fa-exclamation-triangle me-2"></i>
-                                {% for error in form.non_field_errors %} {{ error }} {% endfor %}
-                                {% for field in form %}
-                                    {% for error in field.errors %} {{ error }} {% endfor %}
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-
                         <input type="hidden" name="departure_point" value="{{ request.GET.start_city }}">
                         <input type="hidden" name="arrival_point" value="{{ request.GET.end_city }}">
 
                         <div class="row g-4">
                             <div class="col-12">
-                                <div class="p-3 rounded-4 border border-white border-opacity-10  bg-opacity-5">
+                                <div class="p-3 rounded-4 border border-white border-opacity-10 bg-opacity-5">
                                     <label class="form-label text-white-50 small text-uppercase fw-bold ms-2">Дата поїздки</label>
                                     <div class="input-group">
                                         <span class="input-group-text bg-transparent border-0 text-primary">
@@ -62,15 +42,10 @@
                             </div>
 
                             <div class="col-12">
-                                <div class="p-3 rounded-4 border border-white border-opacity-10  bg-opacity-5">
+                                <div class="p-3 rounded-4 border border-white border-opacity-10 bg-opacity-5">
                                     <div class="d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <label class="form-label text-white fw-bold mb-0">Кількість місць</label>
-                                            <div class="text-white-50 small">Оберіть число пасажирів</div>
-                                        </div>
-                                        <div style="width: 100px;">
-                                            {{ form.seats_count }}
-                                        </div>
+                                        <label class="form-label text-white fw-bold mb-0">Кількість місць</label>
+                                        <div style="width: 100px;">{{ form.seats_count }}</div>
                                     </div>
                                 </div>
                             </div>
@@ -78,24 +53,12 @@
                             <div class="col-12 mt-4">
                                 <div class="px-2 mb-4 text-end">
                                     <span class="text-white-50 me-2">До сплати:</span>
-                                    <span class="h2 text-warning fw-bold mb-0">₴<span id="totalPriceDisplay">{{ final_price|floatformat:0 }}</span></span>
+                                    <span class="h2 text-warning fw-bold">₴<span id="totalPriceDisplay">{{ final_price|floatformat:0 }}</span></span>
                                 </div>
-
                                 <button type="submit" class="btn glass-btn-registration w-100 py-3 fs-5 shadow-glow rounded-4">
-                                    <i class="fas fa-ticket-alt me-2"></i>Підтвердити замовлення
+                                    ПІДТВЕРДИТИ ЗАМОВЛЕННЯ
                                 </button>
                             </div>
-                        </div>
-
-                        <div class="mt-4 p-3 rounded-4 -opacity-5 border border-white border-opacity-5 text-center">
-                            <div class="text-white small fw-bold">{{ user.get_full_name|default:user.username }}</div>
-                            <div class="text-white-50 x-small">{{ user.passenger_profile.phone|default:"Телефон не вказано" }}</div>
-                        </div>
-
-                        <div class="text-center mt-4">
-                            <a href="{% url 'booking_route_list' %}" class="text-white-25 text-decoration-none small hover-white">
-                                <i class="fas fa-arrow-left me-1"></i> Назад до пошуку
-                            </a>
                         </div>
                     </form>
                 </div>
@@ -103,21 +66,35 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/uk.js"></script>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const seatsInput = document.querySelector('[name="seats_count"]');
-        const dateInput = document.querySelector('[name="trip_date"]');
         const totalPriceDisplay = document.getElementById('totalPriceDisplay');
-        const basePrice = parseFloat("{{ final_price }}");
+        const basePrice = parseFloat("{{ final_price|default:0 }}");
+        const availableDays = {{ available_days_json|safe|default:"[]" }};
 
-        // Обмеження: не можна вибрати вчорашню дату в календарі
-        const today = new Date().toISOString().split('T')[0];
-        if(dateInput) {
-            dateInput.setAttribute('min', today);
-        }
+        // Ініціалізація календаря
+        flatpickr('[name="trip_date"]', {
+            locale: "uk",
+            minDate: "today",
+            dateFormat: "Y-m-d",
+            disableMobile: true,
+            enable: [
+                function(date) {
+                    return availableDays.length === 0 || availableDays.includes(date.getDay());
+                }
+            ]
+        });
 
-        // Перерахунок ціни при зміні кількості місць
+        // Живий перерахунок ціни
         if (seatsInput) {
             seatsInput.addEventListener('input', function() {
                 const count = parseInt(this.value) || 1;
@@ -127,57 +104,4 @@
         }
     });
 </script>
-
-<style>
-    .glass-card {
-        background: linear-gradient(160deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
-        backdrop-filter: blur(25px);
-        -webkit-backdrop-filter: blur(25px);
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        border-radius: 32px;
-    }
-
-    .route-line-booking {
-        height: 1px;
-        background: rgba(255, 255, 255, 0.2);
-        width: 100%;
-    }
-
-    .bus-icon-overlap {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: #121212;
-        padding: 0 12px;
-        font-size: 1.1rem;
-    }
-
-    .text-gradient-gold {
-        background: linear-gradient(180deg, #FFFFFF 0%, #BCBCBC 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-
-    .form-control {
-        background: rgba(255, 255, 255, 0.08) !important;
-        border: none !important;
-        color: white !important;
-        font-weight: bold;
-    }
-
-    /* Стилізація календаря */
-    input[type="date"]::-webkit-calendar-picker-indicator {
-        filter: invert(1);
-        cursor: pointer;
-        opacity: 0.6;
-    }
-
-    .shadow-glow {
-        box-shadow: 0 8px 32px rgba(13, 110, 253, 0.25);
-    }
-
-    .x-small { font-size: 0.75rem; }
-    .hover-white:hover { color: white !important; }
-</style>
 {% endblock %}

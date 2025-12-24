@@ -127,18 +127,17 @@ class MakeBookingView(LoginRequiredMixin, CreateView):
             'departure_point': self.request.GET.get('start_city'),
             'arrival_point': self.request.GET.get('end_city'),
             'trip_date': self.request.GET.get('date'),
-            'route_obj': route,  # Передаємо сам об'єкт для валідації
+            'route_obj': route,
         })
         return initial
 
     def get_calculated_data(self):
         route = get_object_or_404(Route, id=self.kwargs.get('route_id'))
-        # Беремо дані або з GET (при завантаженні), або з POST (при збереженні)
         start_city_name = self.request.GET.get('start_city') or self.request.POST.get('departure_point')
         end_city_name = self.request.GET.get('end_city') or self.request.POST.get('arrival_point')
 
-        city_a = City.objects.filter(name__icontains=start_city_name).first()
-        city_b = City.objects.filter(name__icontains=end_city_name).first()
+        city_a = City.objects.filter(name__icontains=start_city_name).first() if start_city_name else None
+        city_b = City.objects.filter(name__icontains=end_city_name).first() if end_city_name else None
 
         distance = get_cached_distance(city_a, city_b) if city_a and city_b else None
         final_price_per_ticket = float(route.min_trip_price)
@@ -154,11 +153,25 @@ class MakeBookingView(LoginRequiredMixin, CreateView):
         }
 
     def get_context_data(self, **kwargs):
+        # 1. Отримуємо базовий контекст
         context = super().get_context_data(**kwargs)
-        context.update(self.get_calculated_data())
+
+        # 2. Отримуємо розраховані дані (ВАЖЛИВО: зберігаємо в змінну)
+        calc_data = self.get_calculated_data()
+
+        # 3. ОНОВЛЮЄМО контекст цими даними (тепер {{ route }} буде доступний)
+        context.update(calc_data)
+
+        # 4. Логіка для календаря
+        route = calc_data['route']
+        available_days = list(route.stops.values_list('day_of_week', flat=True).distinct())
+        js_days = [d if d != 7 else 0 for d in available_days]
+
+        context['available_days_json'] = js_days
         return context
 
     def form_valid(self, form):
+        # Використовуємо той самий метод для отримання ціни при збереженні
         data = self.get_calculated_data()
 
         booking = form.save(commit=False)
@@ -168,21 +181,15 @@ class MakeBookingView(LoginRequiredMixin, CreateView):
         booking.total_price = data['final_price'] * seats
         booking.save()
 
-        # --- ЛОГІКА TELEGRAM СПОВІЩЕННЯ ---
+        # Логіка Telegram сповіщення (залишається без змін)
         try:
             carrier_prof = booking.route.carrier.carrier_profile
-
-            # 1. Отримуємо телефон безпосередньо з профілю пасажира
             try:
                 p_phone = booking.passenger.passenger_profile.phone
             except Exception:
-                # Якщо профілю немає або сталася помилка, пробуємо взяти з форми
                 p_phone = form.cleaned_data.get('passenger_phone') or "не вказано"
 
-            # 2. Формуємо повне ім'я (ім'я + прізвище)
-            full_name = f"{booking.passenger.first_name} {booking.passenger.last_name}".strip()
-            if not full_name:
-                full_name = booking.passenger.username
+            full_name = f"{booking.passenger.first_name} {booking.passenger.last_name}".strip() or booking.passenger.username
 
             text = (
                 f"🆕 <b>Нове замовлення №{booking.id}</b>\n\n"
@@ -192,21 +199,15 @@ class MakeBookingView(LoginRequiredMixin, CreateView):
                 f"👥 <b>Місць:</b> {booking.seats_count}\n"
                 f"💰 <b>Сума:</b> {booking.total_price} грн\n\n"
                 f"👤 <b>Пасажир:</b> {full_name}\n"
-                f"📞 <b>Телефон:</b> <code>{p_phone}</code>\n"  # Використовуємо <code> для копіювання одним кліком
+                f"📞 <b>Телефон:</b> <code>{p_phone}</code>\n"
                 f"────────────────────\n"
             )
-
             send_carrier_notification(carrier_prof, text)
         except Exception as e:
             print(f"Помилка відправки сповіщення: {e}")
 
         messages.success(self.request, f"Бронювання на суму ₴{booking.total_price} успішно створено!")
         return super().form_valid(form)
-
-    def form_invalid(self, form):
-        """Якщо не зберігає — виведе помилку в консоль"""
-        print("DEBUG: Помилки валідації:", form.errors)
-        return super().form_invalid(form)
 
 
 # --- ПАНЕЛЬ КЕРУВАННЯ ПЕРЕВІЗНИКА ---
