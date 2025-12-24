@@ -50,6 +50,9 @@ def city_list_view(request):
         'search_query': q,
     })
 
-def city_detail_view(request, city_id):
-    city = get_object_or_404(City, id=city_id)
+
+def city_detail_view(request, slug):  # Аргумент має називатися точно 'slug'
+    city = get_object_or_404(City, slug=slug)  # Шукаємо по полю slug
+
+    # Решта твого коду...
     return render(request, 'city/city_detail.html', {'city': city})

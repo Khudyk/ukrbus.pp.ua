@@ -6,7 +6,7 @@ SECRET_KEY = 'django-insecure-q&17oamv-====%s^^%6dsyusf@q&aegim+sveers#^2n64feq&
 DEBUG = True
 CSRF_TRUSTED_ORIGINS = [
     'https://ukrbus.pp.ua',
-    'https://*.ngrok-free.app',  # Дозволяє будь-яку адресу від ngrok
+    'https://*.ngrok-free.app',  # пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ-пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ ngrok
 ]
 ALLOWED_HOSTS = ['*']
 INSTALLED_APPS = [
@@ -23,7 +23,10 @@ INSTALLED_APPS = [
     'booking',
     'billing',
     'news',
+    'django.contrib.sitemaps',
+    'django.contrib.sites'
 ]
+SITE_ID = 1
 AUTH_USER_MODEL = 'accounts.User'
 LOGIN_REDIRECT_URL = 'home'  # Р°Р±Рѕ РЅР°Р·РІР° РІР°С€РѕС— View
 LOGOUT_REDIRECT_URL = 'login'
@@ -47,6 +50,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+
+                'trips.context_processors.popular_directions',
             ],
         },
     },

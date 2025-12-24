@@ -237,3 +237,28 @@ main { flex: 1; }
     font-size: 0.75rem;
     font-weight: 600;
 }
+
+.popular-badge {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 6px 15px;
+    color: #fff !important;
+    text-decoration: none;
+    font-size: 0.85rem;
+    transition: all 0.3s ease;
+    display: inline-block;
+}
+
+.popular-badge i {
+    font-size: 0.7rem;
+    color: #ffc107; /* Жовтий акцент */
+}
+
+.popular-badge:hover {
+    background: rgba(255, 193, 7, 0.2);
+    border-color: #ffc107;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}

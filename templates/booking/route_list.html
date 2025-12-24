@@ -1,5 +1,10 @@
 {% extends 'base.html' %}
 
+{% block title %}Автобус {{ request.GET.start_city }} — {{ request.GET.end_city }}{% endblock %}
+
+{% block og_title %}Шукаєте квиток {{ request.GET.start_city }} — {{ request.GET.end_city }}?{% endblock %}
+{% block og_description %}Знайдено актуальні рейси на UkrBus. Ціна від ... грн. Бронюйте без черг!{% endblock %}
+
 {% block content %}
 <div class="container mt-4">
     <div class="row justify-content-center mb-5">
@@ -8,21 +13,125 @@
         </div>
     </div>
 
-<h3 class="text-white mb-2">Доступні маршрути</h3>
-{% if calculated_distance %}
-    <p class="text-white-50 mb-4">
-        <i class="bi bi-geo-alt"></i> Відстань між містами: <strong>{{ calculated_distance }} км</strong>
-    </p>
-{% endif %}
+    <h1 class="text-white h3 mb-2">
+        {% if request.GET.start_city and request.GET.end_city %}
+            Розклад автобусів {{ request.GET.start_city }} — {{ request.GET.end_city }}
+        {% else %}
+            Доступні маршрути
+        {% endif %}
+    </h1>
 
-<div class="row g-4">
-    {% for route in routes %}
-        <div class="">
-            {# Передаємо відстань всередину картки, якщо потрібно #}
-            {% include 'booking/_route_card.html' with road_distance=calculated_distance %}
+    {% if calculated_distance %}
+        <p class="text-white-50 mb-4">
+            <i class="fas fa-route me-2 text-primary"></i> Відстань між містами: <strong>{{ calculated_distance }} км</strong>
+        </p>
+    {% endif %}
+
+    {# --- БЛОК М'ЯКОГО ПОШУКУ (СУСІДНІ ДАТИ) --- #}
+    {% if is_nearby_dates %}
+        <div class="alert alert-info border-0 shadow-lg mb-4" style="background: rgba(13, 110, 253, 0.15); backdrop-filter: blur(10px); border-radius: 20px; border-left: 5px solid #0d6efd !important;">
+            <div class="d-flex align-items-center text-white">
+                <div class="bg-primary rounded-circle p-3 me-3">
+                    <i class="fas fa-calendar-alt fa-lg text-white"></i>
+                </div>
+                <div>
+                    <h5 class="mb-1 fw-bold">На обрану дату рейсів не знайдено</h5>
+                    <p class="mb-0 opacity-75">Ми підібрали для вас графік рейсів за цим напрямком на інші дні тижня.</p>
+                </div>
+            </div>
         </div>
-    {% empty %}
+    {% endif %}
+
+    <div class="row g-4">
+        {% for route in routes %}
+            <div class="col-12">
+                <script type="application/ld+json">
+                {
+                  "@context": "https://schema.org",
+                  "@type": "BusTrip",
+                  "name": "{{ route.title }}",
+                  "description": "Рейс {{ request.GET.start_city }} — {{ request.GET.end_city }}",
+                  "offers": {
+                    "@type": "Offer",
+                    "price": "{{ route.final_price|stringformat:'.2f' }}",
+                    "priceCurrency": "UAH",
+                    "url": "{{ request.build_absolute_uri }}"
+                  },
+                  "departureTime": "{{ route.stops.first.departure_time|date:'H:i' }}",
+                  "itinerary": {
+                    "@type": "ItemList",
+                    "numberOfItems": "{{ route.stops.count }}",
+                    "itemListElement": [
+                      {% for stop in route.stops.all %}
+                      {
+                        "@type": "ListItem",
+                        "position": {{ forloop.counter }},
+                        "name": "{{ stop.city.name }}"
+                      }{% if not forloop.last %},{% endif %}
+                      {% endfor %}
+                    ]
+                  }
+                }
+                </script>
+                {% include 'booking/_route_card.html' with road_distance=calculated_distance %}
+            </div>
+        {% empty %}
+            <div class="col-12 text-center py-5">
+                <div class="glass-card p-5 shadow-lg" style="background: rgba(255,255,255,0.05); border-radius: 25px;">
+                    {% if not request.GET.start_city or not request.GET.end_city %}
+                        <i class="fas fa-search-location fa-3x text-primary mb-3"></i>
+                        <h4 class="text-white">Оберіть напрямок поїздки</h4>
+                        <p class="text-white-50">Вкажіть місто відправлення та прибуття у формі вище.</p>
+                    {% else %}
+                        <i class="fas fa-bus fa-3x text-white-50 mb-3"></i>
+                        <h4 class="text-white">Рейсів не знайдено</h4>
+                        <p class="text-white-50">На жаль, за цим напрямком рейсів поки що немає взагалі.</p>
+                    {% endif %}
+                </div>
+            </div>
         {% endfor %}
+    </div>
+
+    {# --- ДИНАМІЧНІ ПОПУЛЯРНІ НАПРЯМКИ --- #}
+    <div class="mt-5 pt-4 border-top border-light border-opacity-10">
+        <h6 class="text-white-50 small mb-3 text-uppercase" style="letter-spacing: 1px;">
+            <i class="fas fa-fire me-2 text-danger"></i>Популярні напрямки
+        </h6>
+        <div class="d-flex flex-wrap gap-2">
+            {% for dir in popular_directions_list %}
+            <a href="/booking/?start_city={{ dir.start_name }}&end_city={{ dir.end_name }}" class="popular-badge">
+                <i class="fas fa-map-marker-alt me-1 small opacity-50"></i> {{ dir.start_name }} → {{ dir.end_name }}
+            </a>
+            {% empty %}
+                <span class="text-white-50 small">Маршрути скоро з'являться...</span>
+            {% endfor %}
+        </div>
+    </div>
 </div>
-</div>
+
+<style>
+.popular-badge {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 6px 15px;
+    color: #fff !important;
+    text-decoration: none;
+    font-size: 0.85rem;
+    transition: all 0.3s ease;
+}
+.popular-badge:hover {
+    background: rgba(255, 193, 7, 0.2);
+    border-color: #ffc107;
+    transform: translateY(-2px);
+}
+.alert-info {
+    animation: fadeIn 0.5s ease-out;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+</style>
 {% endblock %}
