@@ -192,7 +192,7 @@ class MakeBookingView(LoginRequiredMixin, CreateView):
             full_name = f"{booking.passenger.first_name} {booking.passenger.last_name}".strip() or booking.passenger.username
 
             text = (
-                f"🆕 <b>Нове замовлення №{booking.id}</b>\n\n"
+                f"🆕 <b>Нове замовлення </b>\n\n"
                 f"🚌 <b>Рейс:</b> {booking.route.title}\n"
                 f"📍 <b>Маршрут:</b> {booking.departure_point} — {booking.arrival_point}\n"
                 f"📅 <b>Дата:</b> {booking.trip_date}\n"
@@ -200,7 +200,7 @@ class MakeBookingView(LoginRequiredMixin, CreateView):
                 f"💰 <b>Сума:</b> {booking.total_price} грн\n\n"
                 f"👤 <b>Пасажир:</b> {full_name}\n"
                 f"📞 <b>Телефон:</b> <code>{p_phone}</code>\n"
-                f"────────────────────\n"
+
             )
             send_carrier_notification(carrier_prof, text)
         except Exception as e:
