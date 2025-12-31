@@ -1,27 +1,24 @@
-from django.db.models import Q
-from django.db.models.functions import Lower
 from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404
 from .models import City
 
+
 def city_autocomplete(request):
     term = request.GET.get('term', '').strip().lower()
-
     if not term:
         return JsonResponse({'results': []})
 
-    all_cities = City.objects.all()
+    # Використовуємо values_list для економії пам'яті
+    all_cities = City.objects.values('id', 'name')
 
-    # Фільтрація засобами Python (працює з кирилицею)
     filtered = [
-        c for c in all_cities
-        if term in c.name.lower()
-    ][:10]
+                   {'id': c['id'], 'text': c['name']}
+                   for c in all_cities
+                   if term in c['name'].lower()
+               ][:10]
 
-    results = [{'id': c.id, 'text': c.name} for c in filtered]
-    return JsonResponse({'results': results})
-
+    return JsonResponse({'results': filtered})
 def city_list_view(request):
     q = request.GET.get('q', '').strip().lower()
     # Отримуємо QuerySet (ще не список)

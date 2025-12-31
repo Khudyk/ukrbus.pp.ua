@@ -5,128 +5,167 @@
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const tableBody = document.getElementById('sortable-stops');
-        const addBtn = document.getElementById('add-stop-btn');
-        const totalForms = document.getElementById('id_stops-TOTAL_FORMS');
-        const template = document.getElementById('empty-form-template');
+document.addEventListener('DOMContentLoaded', function() {
+    const tableBody = document.getElementById('sortable-stops');
+    const addBtn = document.getElementById('add-stop-btn');
+    const totalForms = document.getElementById('id_stops-TOTAL_FORMS');
+    const template = document.getElementById('empty-form-template');
 
-        // Функція для оновлення всіх індексів
-        function reindexStops() {
-            const rows = document.querySelectorAll('#sortable-stops .stop-row');
-            rows.forEach((row, index) => {
-                // 1. Оновлюємо текст для ока користувача (1, 2, 3...)
-                const displayNum = row.querySelector('.order-text');
-                if (displayNum) displayNum.innerText = index + 1;
+    function reindexStops() {
+        console.log("--- Спроба перенумерації ---");
+        const rows = document.querySelectorAll('#sortable-stops .stop-row');
+        let visibleCount = 1;
 
-                // 2. Оновлюємо приховане поле order для Django (1, 2, 3...)
-                // Шукаємо інпут, ім'я якого містить "order"
-                const orderInput = row.querySelector('input[name*="-order"]');
-                if (orderInput) {
-                    orderInput.value = index + 1;
-                }
-            });
-        }
+        rows.forEach((row) => {
+            const orderInput = row.querySelector('input[name*="-order"]');
+            const displayNum = row.querySelector('.order-text');
+            const deleteCheckbox = row.querySelector('input[name*="-DELETE"]');
 
-        // Додавання нової зупинки
-        if (addBtn && template) {
-            addBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                const count = parseInt(totalForms.value);
-                const newRowHtml = template.innerHTML.replace(/__prefix__/g, count);
+            // Якщо рядок не видалено, оновлюємо номер
+            if (deleteCheckbox && !deleteCheckbox.checked) {
+                if (displayNum) displayNum.innerText = visibleCount;
+                if (orderInput) orderInput.value = visibleCount;
+                visibleCount++;
+            }
 
-                tableBody.insertAdjacentHTML('beforeend', newRowHtml);
-                totalForms.value = count + 1;
+            // Візуально приховуємо видалені рядки (опціонально)
+            if (deleteCheckbox && deleteCheckbox.checked) {
+                row.style.opacity = '0.3';
+            } else {
+                row.style.opacity = '1';
+            }
+        });
+    }
 
-                reindexStops(); // Важливо: перераховуємо відразу
-            });
-        }
+    // Додавання нової зупинки
+    if (addBtn && template && totalForms) {
+        addBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const count = parseInt(totalForms.value);
+            const newRowHtml = template.innerHTML.replace(/__prefix__/g, count);
 
-        // Ініціалізація перетягування
-        if (tableBody && typeof Sortable !== 'undefined') {
+            tableBody.insertAdjacentHTML('beforeend', newRowHtml);
+            totalForms.value = count + 1;
+            reindexStops();
+        });
+    }
+
+    // Обробка видалення та перетягування
+    if (tableBody) {
+        tableBody.addEventListener('change', function(e) {
+            if (e.target && e.target.name && e.target.name.includes('-DELETE')) {
+                reindexStops();
+            }
+        });
+
+        if (typeof Sortable !== 'undefined') {
             new Sortable(tableBody, {
                 handle: '.drag-handle',
                 animation: 150,
-                onEnd: reindexStops
+                ghostClass: 'glass-drag-ghost',
+                onEnd: function() {
+                    reindexStops();
+                }
             });
         }
+    }
 
-        // Перераховуємо при завантаженні сторінки (якщо вже є зупинки)
-        reindexStops();
+    // Логіка перемикачів ціни
+    const pSwitch = document.querySelector('input[name="is_passenger"]');
+    const sSwitch = document.querySelector('input[name="is_parcel"]');
+    const pSection = document.getElementById('passenger-pricing');
+    const sSection = document.getElementById('parcel-pricing');
 
-        // Логіка перемикачів ціни (залишаємо без змін)
-        const pSwitch = document.getElementById('{{ form.is_passenger.id_for_label }}');
-        const sSwitch = document.getElementById('{{ form.is_parcel.id_for_label }}');
-        const pSection = document.getElementById('passenger-pricing');
-        const sSection = document.getElementById('parcel-pricing');
+    function toggleSections() {
+        if (pSection && pSwitch) pSection.style.display = pSwitch.checked ? 'flex' : 'none';
+        if (sSection && sSwitch) sSection.style.display = sSwitch.checked ? 'flex' : 'none';
+    }
 
-        function toggleSections() {
-            if (pSection && pSwitch) pSection.style.display = pSwitch.checked ? 'flex' : 'none';
-            if (sSection && sSwitch) sSection.style.display = sSwitch.checked ? 'flex' : 'none';
-        }
-        if (pSwitch) pSwitch.addEventListener('change', toggleSections);
-        if (sSwitch) sSwitch.addEventListener('change', toggleSections);
-        toggleSections();
-    });
+    if (pSwitch) pSwitch.addEventListener('change', toggleSections);
+    if (sSwitch) sSwitch.addEventListener('change', toggleSections);
+
+    toggleSections();
+    reindexStops();
+});
 </script>
+
+<style>
+    .glass-drag-ghost { opacity: 0.5; background: rgba(255,255,255,0.1) !important; }
+    .drag-handle { cursor: grab; }
+    .drag-handle:active { cursor: grabbing; }
+    .order-text { font-weight: bold; min-width: 20px; display: inline-block; }
+</style>
 {% endblock %}
 
 {% block content %}
 <div class="container mt-5 pb-5">
-    {% if form.errors or stops.errors %}
-    <div class="alert alert-danger shadow-sm border-0 rounded-4">
-        <h6 class="fw-bold"><i class="fas fa-exclamation-triangle me-2"></i>Помилки валідації:</h6>
-        {{ form.non_field_errors }}
-        {% for field in form %}{% if field.errors %}<p>{{ field.label }}: {{ field.errors|striptags }}</p>{% endif %}{% endfor %}
-        {% for stop_form in stops %}{% if stop_form.errors %}<p>Зупинка {{ forloop.counter }}: {{ stop_form.errors }}</p>{% endif %}{% endfor %}
-    </div>
+    {# Повідомлення про успіх/помилки #}
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show shadow-sm border-0 rounded-4 mb-3 text-white" style="background: rgba(255,255,255,0.1); backdrop-filter: blur(10px);" role="alert">
+                <i class="fas {% if message.tags == 'success' %}fa-check-circle text-success{% else %}fa-exclamation-triangle text-danger{% endif %} me-2"></i>
+                {{ message }}
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
     {% endif %}
 
     <div class="glass-card p-4 shadow-lg border-0">
         <form method="post">
             {% csrf_token %}
-            <h2 class="text-white mb-4 fw-bold">Маршрут</h2>
+            <h2 class="text-white mb-4 fw-bold">Налаштування маршруту</h2>
 
             <div class="row g-3 mb-4">
-                <div class="col-md-5">{{ form.title }}</div>
-                <div class="col-md-4">{{ form.boost_days }}</div>
+                <div class="col-md-5">
+                    <label class="text-white-50 small ms-2">Назва маршруту</label>
+                    {{ form.title }}
+                </div>
+                <div class="col-md-4">
+                    <label class="text-white-50 small ms-2">План просування</label>
+                    {{ form.boost_days }}
+                </div>
                 <div class="col-md-3 d-flex align-items-end">
-                    <div class="form-check form-switch glass-input border-0 py-2 px-4 w-100 d-flex align-items-center justify-content-between">
+                    <div class="form-check form-switch glass-input py-2 px-4 w-100 d-flex align-items-center justify-content-between">
                         <label class="text-white mb-0">Активний</label>
                         {{ form.is_active }}
                     </div>
                 </div>
             </div>
 
-            <div class="row g-4 mb-5">
+            {# Секція цін (Важливо для валідації) #}
+            <div class="row g-4 mb-4">
                 <div class="col-md-6">
-                    <div class="p-4 rounded-4" style="background: rgba(13, 110, 253, 0.05); border: 1px solid rgba(13, 110, 253, 0.2);">
-                        {{ form.is_passenger }} <label class="text-white ms-2">Пасажири</label>
-                        <div id="passenger-pricing" class="row g-2 mt-2">
-                            <div class="col-6">{{ form.min_trip_price }}</div>
-                            <div class="col-6">{{ form.price_per_km }}</div>
+                    <div class="p-3 rounded-4" style="background: rgba(13, 110, 253, 0.05); border: 1px solid rgba(13, 110, 253, 0.2);">
+                        <div class="form-check form-switch mb-2">
+                            {{ form.is_passenger }} <label class="text-white ms-2">Пасажирські місця</label>
+                        </div>
+                        <div id="passenger-pricing" class="row g-2">
+                            <div class="col-6"><label class="text-white-50 x-small">Мін. ціна</label>{{ form.min_trip_price }}</div>
+                            <div class="col-6"><label class="text-white-50 x-small">За 1 км</label>{{ form.price_per_km }}</div>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-6">
-                    <div class="p-4 rounded-4" style="background: rgba(25, 135, 84, 0.05); border: 1px solid rgba(25, 135, 84, 0.2);">
-                        {{ form.is_parcel }} <label class="text-white ms-2">Посилки</label>
-                        <div id="parcel-pricing" class="row g-2 mt-2">
-                            <div class="col-6">{{ form.min_parcel_price }}</div>
-                            <div class="col-6">{{ form.price_per_kg }}</div>
+                    <div class="p-3 rounded-4" style="background: rgba(25, 135, 84, 0.05); border: 1px solid rgba(25, 135, 84, 0.2);">
+                        <div class="form-check form-switch mb-2">
+                            {{ form.is_parcel }} <label class="text-white ms-2">Доставка посилок</label>
+                        </div>
+                        <div id="parcel-pricing" class="row g-2">
+                            <div class="col-6"><label class="text-white-50 x-small">Мін. ціна</label>{{ form.min_parcel_price }}</div>
+                            <div class="col-6"><label class="text-white-50 x-small">За 1 кг</label>{{ form.price_per_kg }}</div>
                         </div>
                     </div>
                 </div>
             </div>
 
             <div class="table-responsive p-4 rounded-4 mb-4" style="background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.1);">
-                <h5 class="text-primary mb-4">Зупинки</h5>
+                <h5 class="text-primary mb-4">Розклад та зупинки</h5>
                 {{ stops.management_form }}
                 <table class="table table-borderless align-middle text-white">
                     <tbody id="sortable-stops">
                         {% for stop_form in stops %}
                         <tr class="stop-row border-bottom border-white border-opacity-5">
-                            <td class="drag-handle py-3" style="cursor: grab;">
+                            <td class="drag-handle py-3">
                                 <i class="fas fa-grip-vertical me-2 text-white-50"></i>
                                 <span class="order-text">{{ forloop.counter }}</span>
                                 {{ stop_form.order }}
@@ -135,7 +174,11 @@
                             <td>{{ stop_form.city }}</td>
                             <td>{{ stop_form.day_of_week }}</td>
                             <td>{{ stop_form.departure_time }}</td>
-                            <td class="text-center">{{ stop_form.DELETE }}</td>
+                            <td class="text-center">
+                                <label class="text-danger" style="cursor: pointer;">
+                                    {{ stop_form.DELETE }} <i class="fas fa-trash-alt ms-1"></i>
+                                </label>
+                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -143,9 +186,9 @@
 
                 <script type="text/html" id="empty-form-template">
                     <tr class="stop-row border-bottom border-white border-opacity-5">
-                        <td class="drag-handle py-3" style="cursor: grab;">
+                        <td class="drag-handle py-3">
                             <i class="fas fa-grip-vertical me-2 text-white-50"></i>
-                            <span class="order-text">__prefix__</span>
+                            <span class="order-text">0</span>
                             {{ stops.empty_form.order }}
                             {% for hidden in stops.empty_form.hidden_fields %}{{ hidden }}{% endfor %}
                         </td>
@@ -158,12 +201,12 @@
 
                 <div class="text-center mt-3">
                     <button type="button" id="add-stop-btn" class="btn btn-outline-primary btn-sm rounded-pill px-4">
-                        <i class="fas fa-plus me-1"></i> Додати зупинку
+                        <i class="fas fa-plus"></i> Додати місто
                     </button>
                 </div>
             </div>
 
-            <button type="submit" class="btn glass-btn-registration w-100 py-2">Зберегти</button>
+            <button type="submit" class="btn glass-btn-registration w-100 py-3 fw-bold">Зберегти маршрут</button>
         </form>
     </div>
 </div>

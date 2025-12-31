@@ -10,7 +10,7 @@ class Route(models.Model):
                                 verbose_name="Перевізник")
     title = models.CharField(max_length=255, verbose_name="Назва маршруту")
     is_active = models.BooleanField(default=True, verbose_name="Активний")
-    top_until = models.DateTimeField(null=True, blank=True, verbose_name="ТОП діє до")
+    top_until = models.DateField(null=True, blank=True, verbose_name="ТОП діє до")
 
     is_passenger = models.BooleanField(
         default=True,
@@ -42,7 +42,7 @@ class Route(models.Model):
     @property
     def is_boosted(self):
         if self.top_until:
-            return self.top_until > timezone.now()
+            return self.top_until >= timezone.now().date()
         return False
 
     # === ВСТАВЛЯЙТЕ СЮДИ (всередині класу Route) ===

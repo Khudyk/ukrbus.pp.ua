@@ -1,6 +1,12 @@
 from django import forms
 from .models import Booking
 from datetime import datetime
+from django import forms
+from datetime import date
+from .models import Booking
+
+
+from django import forms
 
 class BookingForm(forms.ModelForm):
     # Поля вибору зупинок
@@ -62,12 +68,7 @@ class BookingForm(forms.ModelForm):
         return cleaned_data
 
 
-from django import forms
-from datetime import date  # Імпортуємо тільки date для порівняння
-from .models import Booking
 
-
-from django import forms
 
 class MakeBookingForm(forms.ModelForm):
     class Meta:

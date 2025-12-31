@@ -1,19 +1,44 @@
 {% extends 'base.html' %}
 
+{% block title %}Новини та подорожі | Ukrbus{% endblock %}
+
 {% block content %}
 <div class="container py-5">
-    <h2 class="text-white mb-5"><i class="fas fa-newspaper me-3 text-primary"></i>Останні новини</h2>
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <h2 class="text-white m-0">
+            <i class="fas fa-newspaper me-3 text-primary"></i>Останні новини
+        </h2>
+        {% if user.is_staff %}
+        <a href="{% url 'adminpanel:news_list' %}" class="btn btn-outline-warning rounded-pill btn-sm px-3">
+            <i class="fas fa-cog me-1"></i> Керувати
+        </a>
+        {% endif %}
+    </div>
+
     <div class="row g-4">
         {% for post in posts %}
-        <div class="col-md-4">
-            <div class="card glass-card h-100 border-0 overflow-hidden" style="background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); border-radius: 20px;">
+        <div class="col-md-6 col-lg-4">
+            <div class="card glass-card h-100 border-0 overflow-hidden">
+
                 {% if post.image %}
-                    <a href="{{ post.get_absolute_url }}">
-                        <img src="{{ post.image.url }}" class="card-img-top" style="height: 200px; object-fit: cover;" alt="{{ post.title }}">
-                    </a>
+                    <div class="news-image-container overflow-hidden">
+                        <a href="{{ post.get_absolute_url }}">
+                            <img src="{{ post.image.url }}" class="card-img-top news-card-img" alt="{{ post.title }}">
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="bg-dark d-flex align-items-center justify-content-center" style="height: 200px;">
+                        <i class="fas fa-image fa-3x text-white-50"></i>
+                    </div>
                 {% endif %}
+
                 <div class="card-body text-white p-4 d-flex flex-column">
-                    <small class="text-primary mb-2">{{ post.created_at|date:"d.m.Y" }}</small>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <small class="text-primary fw-bold">{{ post.created_at|date:"d.m.Y" }}</small>
+                        {% if not post.is_active %}
+                            <span class="badge bg-danger x-small">Чернетка</span>
+                        {% endif %}
+                    </div>
 
                     <h5 class="card-title fw-bold">
                         <a href="{{ post.get_absolute_url }}" class="text-white text-decoration-none hover-primary">
@@ -21,7 +46,9 @@
                         </a>
                     </h5>
 
-                    <p class="card-text text-white-50 flex-grow-1">{{ post.content|truncatewords:20 }}</p>
+                    <p class="card-text text-white-50 flex-grow-1">
+                        {{ post.content|safe|truncatewords:20 }}
+                    </p>
 
                     <div class="mt-3">
                         <a href="{{ post.get_absolute_url }}" class="btn btn-outline-primary rounded-pill btn-sm px-4">
@@ -33,15 +60,51 @@
         </div>
         {% empty %}
         <div class="col-12 text-center py-5">
-            <h3 class="text-white-50">Новин поки немає...</h3>
+            <div class="glass-card p-5">
+                <i class="fas fa-book-open fa-3x text-white-50 mb-3"></i>
+                <h3 class="text-white-50">Поки що новин немає...</h3>
+                <p class="text-muted">Але скоро тут з'явиться щось цікаве про ваші майбутні подорожі!</p>
+            </div>
         </div>
         {% endfor %}
     </div>
 </div>
 
 <style>
-    .hover-primary:hover { color: #0d6efd !important; transition: 0.3s; }
-    .glass-card { transition: 0.3s; border: 1px solid rgba(255,255,255,0.1) !important; }
-    .glass-card:hover { transform: translateY(-10px); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+    /* Glassmorphism Card */
+    .glass-card {
+        background: rgba(255,255,255,0.05) !important;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-radius: 20px;
+        transition: 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        border: 1px solid rgba(255,255,255,0.1) !important;
+    }
+
+    .glass-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+        background: rgba(255,255,255,0.08) !important;
+        border-color: rgba(13, 110, 253, 0.4) !important;
+    }
+
+    /* Image Effects */
+    .news-card-img {
+        height: 200px;
+        object-fit: cover;
+        transition: 0.5s ease;
+    }
+
+    .glass-card:hover .news-card-img {
+        transform: scale(1.1);
+    }
+
+    /* Typography & Links */
+    .hover-primary { transition: 0.3s; }
+    .hover-primary:hover { color: #0d6efd !important; }
+
+    .x-small { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; }
+
+    .text-white-50 { line-height: 1.6; }
 </style>
 {% endblock %}

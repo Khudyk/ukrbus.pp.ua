@@ -14,7 +14,19 @@ class RouteStopInline(admin.TabularInline):
 @admin.register(Route)
 class RouteAdmin(admin.ModelAdmin):
     # Відображення списку маршрутів
-    list_display = ('title', 'carrier', 'is_active', 'get_stops_count')
+    list_display = (
+        'title',
+        'carrier',
+        'is_parcel',
+        'top_until',
+        'min_trip_price',
+        'price_per_km',
+        'min_parcel_price',
+        'price_per_kg',
+        'get_stops_count',
+        'is_active',
+        'is_passenger',
+    )
     list_filter = ('carrier', 'is_active')
     search_fields = ('title', 'carrier__username', 'carrier__email')
 

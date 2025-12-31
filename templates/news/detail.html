@@ -1,15 +1,18 @@
 {% extends 'base.html' %}
 {% load static %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'adminpanel/css/city_form.css' %}">
+{% endblock %}
 
-{% block title %}{{ post.title }} | Ukrbus{% endblock %} {# Додаємо унікальний заголовок вкладки #}
+{% block title %}{{ post.title }} | Ukrbus{% endblock %}
 
 {% block content %}
 <div class="container py-5">
     <div class="row justify-content-center">
-        <div class="col-lg-10 col-xl-8">
+        <div class="col-lg-10 col-xl-9">
 
             <div class="mb-4 animate__animated animate__fadeIn">
-                <a href="{% url 'news:news_list' %}" class="text-white-50 text-decoration-none hover-white transition-all">
+                <a href="{% url 'news:news_list' %}" class="text-white-50 text-decoration-none hover-white transition-all fw-medium">
                     <i class="fas fa-arrow-left me-2"></i> Назад до всіх новин
                 </a>
             </div>
@@ -17,29 +20,39 @@
             <article class="glass-card overflow-hidden shadow-glow border-0 rounded-5 animate__animated animate__fadeInUp">
 
                 {% if post.image %}
-                <div class="news-detail-image-wrapper position-relative">
-                    <img src="{{ post.image.url }}" class="img-fluid w-100" alt="{{ post.title }}" style="max-height: 500px; object-fit: cover;">
+                <div class="news-detail-image-wrapper position-relative overflow-hidden">
+                    <img src="{{ post.image.url }}" class="img-fluid w-100" alt="{{ post.title }}">
                     <div class="image-overlay-gradient"></div>
                 </div>
                 {% endif %}
 
                 <div class="p-4 p-md-5 bg-dark bg-opacity-20 text-white">
-                    <div class="d-flex align-items-center mb-4 text-white-50 small fw-bold">
-                        <span class="badge bg-primary rounded-pill px-3 py-2 me-3">Новина</span>
+                    <div class="d-flex align-items-center mb-4 text-white-50 small fw-bold flex-wrap gap-3">
+                        <span class="badge bg-primary rounded-pill px-3 py-2 text-uppercase letter-spacing-1">Новини</span>
                         <span><i class="far fa-calendar-alt me-2"></i>{{ post.created_at|date:"d F Y" }}</span>
+                        {% if user.is_staff %}
+                        <a href="{% url 'adminpanel:news_edit' post.pk %}" class="text-warning text-decoration-none">
+                            <i class="fas fa-edit me-1"></i> Редагувати
+                        </a>
+                        {% endif %}
                     </div>
 
-                    <h1 class="display-5 fw-bold mb-4 text-gradient-gold">{{ post.title }}</h1>
+                    <h1 class="display-5 fw-bold mb-4">{{ post.title }}</h1>
 
                     <hr class="border-white border-opacity-10 my-4">
 
-                    <div class="news-content-text lh-lg fs-5 text-white-50">
-                        {# Використовуємо safe, якщо в адмінці є HTML, або linebreaks для звичайного тексту #}
-                        {{ post.content|linebreaks }}
+                    <div class="news-content-text lh-lg text-white-80">
+                        {# Замінюємо linebreaks на safe для відображення HTML з редактора #}
+                        {{ post.content|safe }}
+                    </div>
+
+                    <div class="mt-5 pt-4 border-top border-white border-opacity-10 text-center">
+                        <p class="text-white-50 small">Дякуємо, що обираєте Ukrbus для ваших подорожей!</p>
                     </div>
                 </div>
             </article>
         </div>
     </div>
 </div>
+
 {% endblock %}

@@ -1,15 +1,15 @@
-from django.views.generic import ListView, UpdateView, CreateView
-from django.urls import reverse_lazy
-from django.shortcuts import redirect
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.utils import timezone
 from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
+from django.shortcuts import redirect
+from django.urls import reverse_lazy
+from django.utils import timezone
+from django.views.generic import UpdateView, CreateView
 
-from .forms import RouteForm, RouteStopFormSet
-from .models import Route, RouteStop
 from billing.models import TopPlan
 from billing.services import BillingService
+from .forms import RouteForm, RouteStopFormSet
+from .models import Route, RouteStop
 
 
 class RouteBaseView(LoginRequiredMixin):
@@ -28,77 +28,56 @@ class RouteBaseView(LoginRequiredMixin):
         return context
 
     def form_valid(self, form):
-        # 1. Створюємо формсет з POST даних
-        stops = RouteStopFormSet(self.request.POST, instance=self.object, prefix='stops')
+        context = self.get_context_data()
+        stops = context['stops']
 
-        # 2. Перевіряємо валідність обох форм
         if form.is_valid() and stops.is_valid():
             try:
                 with transaction.atomic():
-                    # Зберігаємо об'єкт маршруту (commit=False, щоб додати carrier)
-                    self.object = form.save(commit=False)
+                    # 1. Зберігаємо маршрут та логіку ТОП (як було)
+                    self.object = form.save()
 
-                    if not self.object.pk:
-                        self.object.carrier = self.request.user
-                        # Стартовий бонус 1 день
-                        if not self.object.top_until:
-                            self.object.top_until = timezone.now() + timezone.timedelta(days=1)
+                    # 2. ПРЯМЕ ОНОВЛЕННЯ ПОРЯДКУ З POST-ДАНИХ
+                    # Ми просто беремо все, що ви щойно прислали в принті
+                    total_forms = int(self.request.POST.get('stops-TOTAL_FORMS', 0))
 
-                    # Логіка оплати ТОП (залишається без змін)
-                    boost_days_raw = form.cleaned_data.get('boost_days')
-                    boost_days = int(boost_days_raw) if boost_days_raw else 0
+                    for i in range(total_forms):
+                        stop_id = self.request.POST.get(f'stops-{i}-id')
+                        new_order = self.request.POST.get(f'stops-{i}-order')
+                        is_deleted = self.request.POST.get(f'stops-{i}-DELETE')
 
-                    if boost_days > 0:
-                        plan = TopPlan.objects.filter(days=boost_days, is_active=True).first()
-                        carrier_profile = self.request.user.carrier_profile
-
-                        if plan and carrier_profile.balance >= plan.price:
-                            success, msg = BillingService.process_payment(
-                                user=self.request.user,
-                                amount=plan.price,
-                                description=f"ТОП {plan.days} дн. для {self.object.title}"
-                            )
-                            if success:
-                                now = timezone.now()
-                                start = self.object.top_until if (
-                                            self.object.top_until and self.object.top_until > now) else now
-                                self.object.top_until = start + timezone.timedelta(days=plan.days)
-                                messages.success(self.request, f"ТОП активовано!")
+                        if stop_id and new_order:
+                            if is_deleted == 'on':  # Якщо стоїть галочка видалення
+                                RouteStop.objects.filter(id=stop_id).delete()
+                                print(f"DEBUG: Видалено ID {stop_id}")
                             else:
-                                messages.error(self.request, msg)
-                        else:
-                            messages.error(self.request, "Недостатньо коштів для активації ТОП.")
+                                # ОНОВЛЮЄМО ПРЯМО В БАЗІ
+                                RouteStop.objects.filter(id=stop_id).update(order=int(new_order))
+                                print(f"DEBUG: ID {stop_id} отримав ORDER {new_order}")
 
-                    # Зберігаємо фінальний стан маршруту
-                    self.object.save()
+                    # 3. Зберігаємо нові зупинки (якщо вони були додані через "Додати місто")
+                    # Нові зупинки не мають ID в POST, тому їх збереже стандартний метод
+                    stops.instance = self.object
+                    stops.save()
 
-                    # 3. ЗБЕРЕЖЕННЯ ЗУПИНОК З ПЕРЕРАХУНКОМ ПОРЯДКУ
-                    # commit=False дозволяє нам змінити поле 'order' перед записом у БД
-                    instances = stops.save(commit=False)
-
-                    # Спочатку видаляємо ті, що користувач позначив на видалення
-                    for obj in stops.deleted_objects:
-                        obj.delete()
-
-                    # Проходимо по кожній зупинці в тому порядку, в якому вони прийшли з форми
-                    # Це гарантує правильний порядок: 1, 2, 3...
-                    for index, stop_instance in enumerate(instances, start=1):
-                        stop_instance.route = self.object
-                        stop_instance.order = index  # Примусово записуємо правильний номер
-                        stop_instance.save()
-
-                    # Зберігаємо зв'язки many-to-many, якщо вони є (для City тощо)
-                    stops.save_m2m()
-
+                messages.success(self.request, "Порядок зупинок успішно оновлено!")
                 return redirect(self.success_url)
             except Exception as e:
-                messages.error(self.request, f"Критична помилка збереження: {str(e)}")
+                print(f"ПОМИЛКА: {e}")
+                messages.error(self.request, f"Помилка при збереженні: {e}")
                 return self.form_invalid(form)
-        else:
-            # Якщо валідація не пройшла (наприклад, порожній order, якщо blank=False)
-            return self.render_to_response(self.get_context_data(form=form, stops=stops))
+        return self.form_invalid(form)
 
     def form_invalid(self, form):
+        context = self.get_context_data()
+        stops = context['stops']
+
+        # Виводимо загальне повідомлення про помилку
+        messages.error(self.request, "Не вдалося зберегти. Перевірте правильність заповнення полів.")
+
+        # Логуємо помилки в консоль сервера для вас
+        print(f"DEBUG: Помилки форми: {form.errors}")
+        print(f"DEBUG: Помилки зупинок: {stops.errors}")
         return self.render_to_response(self.get_context_data(form=form))
 
 

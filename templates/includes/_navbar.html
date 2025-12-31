@@ -16,15 +16,15 @@
                     </a>
                 </li>
                 <li class="nav-item">
-<a class="nav-link text-white opacity-75" href="{% url 'city:city_list' %}">
-    <i class="fas fa-globe-europe me-1 text-primary"></i>Міста
-</a>
+                    <a class="nav-link text-white opacity-75" href="{% url 'city:city_list' %}">
+                        <i class="fas fa-globe-europe me-1 text-primary"></i>Міста
+                    </a>
                 </li>
                 <li class="nav-item">
-    <a class="nav-link text-white opacity-75" href="{% url 'news:news_list' %}">
-        <i class="fas fa-newspaper me-1 text-primary"></i>Новини
-    </a>
-</li>
+                    <a class="nav-link text-white opacity-75" href="{% url 'news:news_list' %}">
+                        <i class="fas fa-newspaper me-1 text-primary"></i>Новини
+                    </a>
+                </li>
 
                 {% if user.is_authenticated %}
                     {% if user.is_carrier %}
@@ -32,12 +32,13 @@
                             <a class="nav-link text-white opacity-75" href="{% url 'carrier-bookings' %}">
                                 <i class="fas fa-clipboard-list me-1 text-warning"></i>Управління замовленнями
                             </a>
-                        </li><li class="nav-item">
-        <a class="nav-link text-white opacity-75" href="{% url 'passenger_manifest' %}?date={{ now|date:'Y-m-d' }}">
-            <i class="fas fa-print me-1 text-success"></i>Відомість
-        </a>
-    </li>
-                    {% else %}
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white opacity-75" href="{% url 'passenger_manifest' %}?date={{ now|date:'Y-m-d' }}">
+                                <i class="fas fa-print me-1 text-success"></i>Відомість
+                            </a>
+                        </li>
+                    {% elif not user.is_staff %}
                         <li class="nav-item">
                             <a class="nav-link text-white opacity-75" href="{% url 'passenger-bookings' %}">
                                 <i class="fas fa-ticket-alt me-1 text-info"></i>Мої поїздки
@@ -62,7 +63,39 @@
                                 </a>
                             </li>
 
+                            {# --- БЛОК АДМІНІСТРАТОРА (is_staff) --- #}
+                            {% if user.is_staff %}
+                                <li><hr class="dropdown-divider opacity-10"></li>
+                                <li class="dropdown-header text-primary small fw-bold px-3">АДМІНІСТРУВАННЯ</li>
+                                <li>
+                                    <a class="dropdown-item py-2 fw-bold" href="{% url 'adminpanel:dashboard' %}">
+                                        <i class="fas fa-tachometer-alt text-primary me-2"></i> Панель управління
+                                    </a>
+                                </li>
+                               <li>
+                                    <a class="dropdown-item py-2" href="{% url 'adminpanel:booking_list' %}">
+                                        <i class="fas fa-tasks text-primary me-2"></i> Журнал бронювань
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item py-2" href="{% url 'adminpanel:route_list' %}">
+                                        <i class="fas fa-edit text-success me-2"></i> Список маршрутів
+                                    </a>
+                                </li>
+                               <li>
+                                    <a class="dropdown-item py-2" href="{% url 'adminpanel:news_list' %}">
+                                        <i class="fas fa-edit text-success me-2"></i> Керування новинами
+                                    </a>
+                                </li>                           <li>
+                                    <a class="dropdown-item py-2" href="{% url 'adminpanel:city_list' %}">
+                                        <i class="fas fa-edit text-success me-2"></i> Керування містами
+                                    </a>
+                                </li>
+                            {% endif %}
+
+                            {# --- БЛОК ПЕРЕВІЗНИКА --- #}
                             {% if user.is_carrier %}
+                                <li><hr class="dropdown-divider opacity-10"></li>
                                 <li>
                                     <a class="dropdown-item py-2" href="{% url 'carrier-bookings' %}">
                                         <i class="fas fa-concierge-bell text-warning me-2"></i> Панель перевізника
@@ -73,7 +106,8 @@
                                         <i class="fas fa-chart-line text-info me-2"></i> Статистика
                                     </a>
                                 </li>
-                            {% else %}
+                            {# --- БЛОК ПАСАЖИРА --- #}
+                            {% elif not user.is_staff %}
                                 <li>
                                     <a class="dropdown-item py-2" href="{% url 'passenger-bookings' %}">
                                         <i class="fas fa-history text-info me-2"></i> Історія квитків

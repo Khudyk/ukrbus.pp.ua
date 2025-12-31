@@ -6,9 +6,10 @@ from unidecode import unidecode
 
 class Post(models.Model):
     title = models.CharField(max_length=200, verbose_name="Заголовок")
-    # Додаємо поле slug
     slug = models.SlugField(unique=True, max_length=255, blank=True, verbose_name="URL-адреса")
-    #slug = models.SlugField(unique=False, max_length=255, blank=True, null=True, verbose_name="URL-адреса")
+
+    # ДОДАЄМО ЦЕ ПОЛЕ:
+    image = models.ImageField(upload_to='news_images/', blank=True, null=True, verbose_name="Головне зображення")
 
     content = models.TextField(verbose_name="Текст новини")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата публікації")
@@ -23,12 +24,10 @@ class Post(models.Model):
     def __str__(self):
         return self.title
 
-    # Автоматична генерація слага при збереженні
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(unidecode(self.title))
         super().save(*args, **kwargs)
 
-    # Оновлюємо посилання: тепер воно веде на slug, а не на pk
     def get_absolute_url(self):
         return reverse('news:news_detail', kwargs={'slug': self.slug})

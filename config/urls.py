@@ -1,12 +1,12 @@
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import path, include
-
 # 1. Імпортуйте ваші класи Sitemap
 from django.contrib.sitemaps.views import sitemap
-from trips.sitemaps import StaticViewSitemap, RouteSitemap
+from django.urls import path, include
+
 from city.sitemaps import CitySitemap  # Додайте цей імпорт
+from trips.sitemaps import StaticViewSitemap, RouteSitemap
 
 # 2. Визначте повний словник sitemaps
 sitemaps = {
@@ -24,8 +24,11 @@ urlpatterns = [
     path('news/', include('news.urls')),
     path('citys/', include('city.urls')),
 
+    path('management/', include('adminpanel.urls')),
+
     # Sitemap
     path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='django.contrib.sitemaps.views.sitemap'),
+
 ]
 
 if settings.DEBUG:
